@@ -100,15 +100,15 @@ Jaka jest są podobieństwa, jakie różnice pomiędzy grupowaniem danych a dzia
 
 ![](img/ex1/postgres4.png)
 
-## SQLight
+## SQLite
 
-![](img/ex1/SQLight1.png)
+![](img/ex1/sqlite1.png)
 
-![](img/ex1/SQLight2.png)
+![](img/ex1/sqlite2.png)
 
-![](img/ex1/SQLight3.png)
+![](img/ex1/sqlite3.png)
 
-![](img/ex1/SQLight4.png)
+![](img/ex1/sqlite4.png)
 
 
 Widzimy, że funkcje okna przypisują obliczoną wartość każdemu wierszowi danych.
@@ -166,9 +166,39 @@ Polecenia równoważne:
 
 ## Postgres
 
+- Zapytanie z użyciem funkcji podzapytania
+
+![](./img/ex2/postgres1.png)
+
+- Zapytanie z użyciem funkcji okna
+
 ![](./img/ex2/postgres2.png)
 
+- Wynik równoważny do wyniku z funkcji zapytania przy użyciu funkcji okna
+
+![](./img/ex2/postgres3.png)
+
+- Wynik równoważny do wyniku z funkcji okna przy użyciu funkcji zapytania
+
+![](./img/ex2/postgres4.png)
+
 ## SQlite
+
+- Zapytanie z użyciem funkcji podzapytania
+
+![](./img/ex2/sqlite1.png)
+
+- Zapytanie z użyciem funkcji okna
+
+![](./img/ex2/sqlite2.png)
+
+- Wynik równoważny do wyniku z funkcji zapytania przy użyciu funkcji okna
+
+![](./img/ex2/sqlite3.png)
+
+- Wynik równoważny do wyniku z funkcji okna przy użyciu funkcji zapytania
+
+![](./img/ex2/sqlite4.png)
 
 # Zadanie 3
 
