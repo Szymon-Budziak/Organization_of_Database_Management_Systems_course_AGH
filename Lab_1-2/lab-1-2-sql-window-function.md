@@ -81,8 +81,6 @@ from products p;
 
 Jaka jest są podobieństwa, jakie różnice pomiędzy grupowaniem danych a działaniem funkcji okna?
 
----
-
 Widzimy, że funkcje okna przypisują obliczoną wartość każdemu wierszowi danych.
 Grupowanie automatycznie agreguje wartości do grup.
 
@@ -129,12 +127,29 @@ Jaka jest różnica? Czego dotyczy warunek w każdym z przypadków? Napisz polec
    ale bez potrzeby podzapytania. Warunek productid < 10 również jest używany do filtracji wyników na podstawie
    identyfikatora produktu mniejszego niż 10.
 
+
 | Zapytanie    | MySQL                      | Postgres                    | SQLite                     |
 |--------------|----------------------------|-----------------------------|----------------------------|
 | 1 oryginalne | ![](./img/ex2/mysql11.png) | ![](img/ex2/postgres11.png) | ![](img/ex2/sqlite11.png)  |
 | 1 równoważne | ![](./img/ex2/mysql12.png) | ![](img/ex2/postgres12.png) | ![](img/ex2/sqlite12.png)  |
 | 2 oryginalne | ![](./img/ex2/mysql21.png) | ![](img/ex2/postgres21.png) | ![](img/ex2/sqlite21.png)  |
 | 2 równoważne | ![](./img/ex2/mysql22.png) | ![](img/ex2/postgres22.png) | ![](img/ex2/sqlitet22.png) |
+
+- Zapytanie z użyciem funkcji podzapytania
+
+![](./img/ex2/sqlite1.png)
+
+- Zapytanie z użyciem funkcji okna
+
+![](./img/ex2/sqlite2.png)
+
+- Wynik równoważny do wyniku z funkcji zapytania przy użyciu funkcji okna
+
+![](./img/ex2/sqlite3.png)
+
+- Wynik równoważny do wyniku z funkcji okna przy użyciu funkcji zapytania
+
+![](./img/ex2/sqlite4.png)
 
 # Zadanie 3
 
