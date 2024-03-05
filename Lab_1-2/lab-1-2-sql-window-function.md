@@ -90,6 +90,30 @@ Jaka jest są podobieństwa, jakie różnice pomiędzy grupowaniem danych a dzia
 
 ![](./img/ex1/mysql4.png)
 
+## PostgreSQL
+
+![](img/ex1/postgres1.png)
+
+![](img/ex1/postgres2.png)
+
+![](img/ex1/postgres3.png)
+
+![](img/ex1/postgres4.png)
+
+## SQLight
+
+![](img/ex1/SQLight1.png)
+
+![](img/ex1/SQLight2.png)
+
+![](img/ex1/SQLight3.png)
+
+![](img/ex1/SQLight4.png)
+
+
+Widzimy, że funkcje okna przypisują obliczoną wartość każdemu wierszowi danych.
+Grupowanie automatycznie agreguje wartości do grup.
+
 ---
 
 # Zadanie 2 - obserwacja
@@ -141,6 +165,8 @@ Polecenia równoważne:
 ![](./img/ex2/mysql.png)
 
 ## Postgres
+
+![](./img/ex2/postgres2.png)
 
 ## SQlite
 
