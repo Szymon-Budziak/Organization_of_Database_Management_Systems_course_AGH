@@ -127,29 +127,12 @@ Jaka jest różnica? Czego dotyczy warunek w każdym z przypadków? Napisz polec
    ale bez potrzeby podzapytania. Warunek productid < 10 również jest używany do filtracji wyników na podstawie
    identyfikatora produktu mniejszego niż 10.
 
-
-| Zapytanie    | MySQL                      | Postgres                    | SQLite                     |
-|--------------|----------------------------|-----------------------------|----------------------------|
-| 1 oryginalne | ![](./img/ex2/mysql11.png) | ![](img/ex2/postgres11.png) | ![](img/ex2/sqlite11.png)  |
-| 1 równoważne | ![](./img/ex2/mysql12.png) | ![](img/ex2/postgres12.png) | ![](img/ex2/sqlite12.png)  |
-| 2 oryginalne | ![](./img/ex2/mysql21.png) | ![](img/ex2/postgres21.png) | ![](img/ex2/sqlite21.png)  |
-| 2 równoważne | ![](./img/ex2/mysql22.png) | ![](img/ex2/postgres22.png) | ![](img/ex2/sqlitet22.png) |
-
-- Zapytanie z użyciem funkcji podzapytania
-
-![](./img/ex2/sqlite1.png)
-
-- Zapytanie z użyciem funkcji okna
-
-![](./img/ex2/sqlite2.png)
-
-- Wynik równoważny do wyniku z funkcji zapytania przy użyciu funkcji okna
-
-![](./img/ex2/sqlite3.png)
-
-- Wynik równoważny do wyniku z funkcji okna przy użyciu funkcji zapytania
-
-![](./img/ex2/sqlite4.png)
+| Zapytanie    | MySQL                      | Postgres                    | SQLite                    |
+|--------------|----------------------------|-----------------------------|---------------------------|
+| 1 oryginalne | ![](./img/ex2/mysql11.png) | ![](img/ex2/postgres11.png) | ![](img/ex2/sqlite11.png) |
+| 1 równoważne | ![](./img/ex2/mysql12.png) | ![](img/ex2/postgres12.png) | ![](img/ex2/sqlite12.png) |
+| 2 oryginalne | ![](./img/ex2/mysql21.png) | ![](img/ex2/postgres21.png) | ![](img/ex2/sqlite21.png) |
+| 2 równoważne | ![](./img/ex2/mysql22.png) | ![](img/ex2/postgres22.png) | ![](img/ex2/sqlite22.png) |
 
 # Zadanie 3
 
@@ -158,14 +141,46 @@ Baza: Northwind, tabela: products
 1. Napisz polecenie, które zwraca: id produktu, nazwę produktu, cenę produktu, średnią cenę wszystkich produktów.
 
 ```sql
-
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       AVG(p.UnitPrice) AS AveragePrice
+FROM Products AS p
 ```
 
-2. Napisz polecenie z wykorzystaniem z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj czasy oraz plany
+2. Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj czasy oraz plany
    wykonania zapytań.
 
-```sql
+- Polecenie z wykorzystaniem podzapytania
 
+```sql
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       (SELECT AVG(p2.UnitPrice) FROM Products AS p2) AS AveragePrice
+FROM Products AS p
+```
+
+- Polecenie z wykorzystaniem joina
+
+```sql
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       AVG(p2.UnitPrice) AS AveragePrice
+FROM Products p
+         JOIN Products p2 ON 1 = 1
+GROUP BY p.ProductID, p.ProductName, p.UnitPrice
+```
+
+- Polecenie z wykorzystaniem funkcji okna
+
+```sql
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       AVG(UnitPrice) OVER() AS AveragePrice
+FROM Products AS p
 ```
 
 ---
@@ -182,10 +197,19 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 
 ![w:700](./img/ex3/window-3.png)
 
-| Zadanie | MySQL                     | Postgres                   | SQLite                   |
-|---------|---------------------------|----------------------------|--------------------------|
-| 1       | ![](./img/ex3/mysql1.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
-| 2       | ![](./img/ex3/mysql2.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
+| Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
+|--------------|---------------------------|----------------------------|--------------------------|
+| Podzapytanie | ![](./img/ex3/mysql1.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
+| Join         | ![](./img/ex3/mysql2.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
+| Funkcja okna | ![](./img/ex3/mysql3.png) | ![](img/ex3/postgres3.png) | ![](img/ex3/sqlite3.png) |
+
+**Porównanie czasów wykonania**
+
+| Zapytanie    | MySQL                         | Postgres                   | SQLite                   |
+|--------------|-------------------------------|----------------------------|--------------------------|
+| Podzapytanie | ![](./img/ex3/mysql1time.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
+| Join         | ![](./img/ex3/mysql2time.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
+| Funkcja okna | ![](./img/ex3/mysql3time.png) | ![](img/ex3/postgres3.png) | ![](img/ex3/sqlite3.png) |
 
 ---
 
@@ -194,26 +218,76 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 Baza: Northwind, tabela products
 
 1. Napisz polecenie, które zwraca: id produktu, nazwę produktu, cenę produktu, średnią cenę produktów w kategorii, do
-   której należy dany produkt. Wyświetl tylko pozycje (produkty) których cena jest większa niż średnia cena.
+   której należy dany produkt. Wyświetl tylko pozycje (produkty), których cena jest większa niż średnia cena.
 
 ```sql
-
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       AVG(p2.UnitPrice) AS AvgCategoryPrice
+FROM Products p
+         JOIN
+     Products p2 ON p.CategoryID = p2.CategoryID
+GROUP BY p.ProductID,
+         p.ProductName,
+         p.UnitPrice
+HAVING p.UnitPrice > AVG(p2.UnitPrice)
 ```
 
 2. Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. Porównaj czasy oraz
-   plany
-   wykonania zapytań.
+   plany wykonania zapytań.
+
+- Polecenie z wykorzystaniem podzapytania
 
 ```sql
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       (SELECT AVG(p2.UnitPrice)
+        FROM Products AS p2
+        WHERE p2.CategoryID = p.CategoryID) AS AvgCategoryPrice
+FROM Products p
+WHERE p.UnitPrice > (SELECT AVG(p3.UnitPrice)
+                     FROM Products p3
+                     WHERE p3.CategoryID = p.CategoryID)
+```
 
+- Polecenie z wykorzystaniem joina
+
+```sql
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       AVG(p2.UnitPrice) OVER (PARTITION BY p.CategoryID) AS AvgCategoryPrice
+FROM Products p
+         JOIN
+     Products p2 ON p.CategoryID = p2.CategoryID
+WHERE p.UnitPrice > AVG(p2.UnitPrice) OVER (PARTITION BY p.CategoryID);
+```
+
+- Polecenie z wykorzystaniem funkcji okna
+
+```sql
+WITH AvgPrices AS (SELECT ProductID,
+                          ProductName,
+                          UnitPrice,
+                          AVG(UnitPrice) OVER (PARTITION BY CategoryID) AS AvgCategoryPrice
+                   FROM Products)
+SELECT ProductID,
+       ProductName,
+       UnitPrice,
+       AvgCategoryPrice
+FROM AvgPrices
+WHERE UnitPrice > AvgCategoryPrice;
 ```
 
 Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
-| Zadanie | MySQL                     | Postgres                   | SQLite                   |
-|---------|---------------------------|----------------------------|--------------------------|
-| 1       | ![](./img/ex4/mysql1.png) | ![](img/ex4/postgres1.png) | ![](img/ex4/sqlite1.png) |
-| 2       | ![](./img/ex4/mysql2.png) | ![](img/ex4/postgres2.png) | ![](img/ex4/sqlite2.png) |
+| Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
+|--------------|---------------------------|----------------------------|--------------------------|
+| Podzapytanie | ![](./img/ex4/mysql1.png) | ![](img/ex4/postgres1.png) | ![](img/ex4/sqlite1.png) |
+| Join         | ![](./img/ex4/mysql2.png) | ![](img/ex4/postgres2.png) | ![](img/ex4/sqlite2.png) |
+| Funkcja okna | ![](./img/ex4/mysql3.png) | ![](img/ex4/postgres3.png) | ![](img/ex4/sqlite3.png) |
 
 ---
 
