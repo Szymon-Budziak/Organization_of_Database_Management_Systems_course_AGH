@@ -431,7 +431,11 @@ To samo co w zadaniu 3, ale dla większego zbioru danych
 - Polecenie z wykorzystaniem podzapytania
 
 ```sql
-parti
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       (SELECT AVG(p2.UnitPrice) FROM Products AS p2) AS AveragePrice
+FROM product_history AS p
 ```
 
 - Polecenie z wykorzystaniem joina
