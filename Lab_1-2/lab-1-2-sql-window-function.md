@@ -205,11 +205,11 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 
 **Porównanie czasów wykonania**
 
-| Zapytanie    | MySQL                         | Postgres                   | SQLite                   |
-|--------------|-------------------------------|----------------------------|--------------------------|
-| Podzapytanie | ![](./img/ex3/mysql1time.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
-| Join         | ![](./img/ex3/mysql2time.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
-| Funkcja okna | ![](./img/ex3/mysql3time.png) | ![](img/ex3/postgres3.png) | ![](img/ex3/sqlite3.png) |
+| Zapytanie    | MySQL                         | Postgres                       | SQLite                   |
+|--------------|-------------------------------|--------------------------------|--------------------------|
+| Podzapytanie | ![](./img/ex3/mysql1time.png) | ![](img/ex3/postgres1time.png) | ![](img/ex3/sqlite1time.png) |
+| Join         | ![](./img/ex3/mysql2time.png) | ![](img/ex3/postgres2time.png) | ![](img/ex3/sqlite2time.png) |
+| Funkcja okna | ![](./img/ex3/mysql3time.png) | ![](img/ex3/postgres3time.png) | ![](img/ex3/sqlite3time.png) |
 
 ---
 
@@ -428,8 +428,32 @@ To samo co w zadaniu 3, ale dla większego zbioru danych
    plany
    wykonania zapytań.
 
-```sql
+- Polecenie z wykorzystaniem podzapytania
 
+```sql
+parti
+```
+
+- Polecenie z wykorzystaniem joina
+
+```sql
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       AVG(p2.UnitPrice) AS AveragePrice
+FROM product_history p
+         JOIN product_history p2 ON 1 = 1
+GROUP BY p.ProductID, p.ProductName, p.UnitPrice
+```
+
+- Polecenie z wykorzystaniem funkcji okna
+
+```sql
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+       AVG(UnitPrice) OVER() AS AveragePrice
+FROM product_history AS p
 ```
 
 Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
@@ -438,6 +462,10 @@ Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 |---------|---------------------------|----------------------------|--------------------------|
 | 1       | ![](./img/ex6/mysql1.png) | ![](img/ex6/postgres1.png) | ![](img/ex6/sqlite1.png) |
 | 2       | ![](./img/ex6/mysql2.png) | ![](img/ex6/postgres2.png) | ![](img/ex6/sqlite2.png) |
+| 3       | ![](./img/ex6/mysql3.png) | ![](img/ex6/postgres3.png) | ![](img/ex6/sqlite3.png) |
+
+Możemy zaobserwować, że zapytanie z użyciem joina dla postgres nie wykonało się nawet po 8 minutach od wywołania.
+SSMS dla MySQL nie rozpoznaje nowo utworzonej tabeli, ale potrafi wykonać na niej zapytanie
 
 ---
 
@@ -451,7 +479,7 @@ Lekka modyfikacja poprzedniego zadania
     - średnią cenę produktów w kategorii do której należy dany produkt.
     - łączną wartość sprzedaży produktów danej kategorii (suma dla pola value)
     - średnią cenę danego produktu w roku którego dotyczy dana pozycja
-    - łączną wartość sprzedaży produktów danej kategorii (suma dla pola value)
+    - łączną wartość sprzedaży produktów danej kategorii (suma dla pola value) (powtórzone???)
 
 ```sql
 
@@ -461,8 +489,19 @@ Lekka modyfikacja poprzedniego zadania
    okna spróbuj użyć klauzuli WINDOW.
 
 ```sql
-
+SELECT p.id,
+       p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+	   avg(p.unitprice) over category_window as avgPrice,
+	   sum(p.value) over category_window as categoryValue,
+	   avg(p.unitprice) over yearly_window as yearlyAvgPrice
+FROM product_history AS p
+WINDOW 
+    category_window AS (PARTITION BY p.CategoryID),
+    yearly_window AS (PARTITION BY YEAR(p.Date))
 ```
+
 
 Porównaj czasy oraz plany wykonania zapytań.
 
@@ -575,8 +614,8 @@ różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
 | Funkcje | MySQL                      | Postgres                    | SQLite                    |
 |---------|----------------------------|-----------------------------|---------------------------|
-| lag()   | ![](./img/ex10/mysql1.png) | ![](img/ex10/postgres1.png) | ![](img/ex10/sqlite1.png) |
-| lead()  | ![](./img/ex10/mysql2.png) | ![](img/ex10/postgres2.png) | ![](img/ex10/sqlite2.png) |
+| lag()   | ![](./img/ex11/mysql1.png) | ![](img/ex11/postgres1.png) | ![](img/ex11/sqlite1.png) |
+| lead()  | ![](./img/ex11/mysql2.png) | ![](img/ex11/postgres2.png) | ![](img/ex11/sqlite2.png) |
 
 ---
 
