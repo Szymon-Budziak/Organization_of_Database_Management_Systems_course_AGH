@@ -559,13 +559,13 @@ SELECT
     p1.productname,
     p1.unitprice,
     p1.categoryid,
-    (SELECT COUNT(*)+1 FROM products p2
+    (SELECT COUNT(*) + 1 FROM products p2
      WHERE p2.categoryid = p1.categoryid
          AND p2.unitprice > p1.unitprice) AS rowno,
-	(SELECT COUNT(*)+1 FROM products p2
+	(SELECT COUNT(*) + 1 FROM products p2
      WHERE p2.categoryid = p1.categoryid
          AND p2.unitprice > p1.unitprice) AS rankprice,
-	(SELECT COUNT(DISTINCT p2.unitprice)+1 FROM products p2
+	(SELECT COUNT(DISTINCT p2.unitprice) + 1 FROM products p2
      WHERE p2.categoryid = p1.categoryid
          AND p2.unitprice > p1.unitprice) AS denserankprice
 FROM 
