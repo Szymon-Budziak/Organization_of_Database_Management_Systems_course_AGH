@@ -553,10 +553,29 @@ from products;
 
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna
 
-| MySQL                     | Postgres                   | SQLite                   |
-|---------------------------|----------------------------|--------------------------|
-| ![](./img/ex8/mysql2.png) | ![](img/ex8/postgres2.png) | ![](img/ex8/sqlite2.png) |
+```sql
+SELECT 
+    p1.productid,
+    p1.productname,
+    p1.unitprice,
+    p1.categoryid,
+    (SELECT COUNT(*)+1 FROM products p2
+     WHERE p2.categoryid = p1.categoryid
+         AND p2.unitprice > p1.unitprice) AS rowno,
+	(SELECT COUNT(*)+1 FROM products p2
+     WHERE p2.categoryid = p1.categoryid
+         AND p2.unitprice > p1.unitprice) AS rankprice,
+	(SELECT COUNT(DISTINCT p2.unitprice)+1 FROM products p2
+     WHERE p2.categoryid = p1.categoryid
+         AND p2.unitprice > p1.unitprice) AS denserankprice
+FROM 
+    products p1
+ORDER BY p1.categoryid, rowno;
 
+```
+Widać zasadniczą różnicę działania dla kolumny `rowno`
+zwiększanie wartość musiałaby rosnąć dla zbioru produktów o tej samej cenie.
+Nie jest to trywialne bez funkcji okna (przynajmniej dla studenta który się uczy)
 ---
 
 # Zadanie 9
