@@ -420,9 +420,7 @@ To samo co w zadaniu 3, ale dla większego zbioru danych
    kategorii do której należy dany produkt. Wyświetl tylko pozycje (produkty) których cena jest większa niż średnia
    cena.
 
-```sql
-
-```
+(przykłady poniżej)
 
 2. Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. Porównaj czasy oraz
    plany
@@ -432,32 +430,46 @@ To samo co w zadaniu 3, ale dla większego zbioru danych
 
 ```sql
 SELECT p.ProductID,
-       p.ProductName,
+	   p.ProductName,
        p.UnitPrice,
-       (SELECT AVG(p2.UnitPrice) FROM Products AS p2) AS AveragePrice
-FROM product_history AS p
+	   (SELECT AVG(ph.UnitPrice) 
+	    FROM product_history ph 
+	    WHERE ph.CategoryID = p.CategoryID) as avgprice
+FROM product_history as p
+WHERE p.UnitPrice > 
+      (SELECT AVG(ph.UnitPrice) 
+       FROM product_history ph 
+       WHERE ph.CategoryID = p.CategoryID)
 ```
 
 - Polecenie z wykorzystaniem joina
 
 ```sql
+WITH classes as
+(select categoryid, avg(unitprice) avgprice
+from product_history p
+group by categoryid)
+
 SELECT p.ProductID,
-       p.ProductName,
+	   p.ProductName,
        p.UnitPrice,
-       AVG(p2.UnitPrice) AS AveragePrice
-FROM product_history p
-         JOIN product_history p2 ON 1 = 1
-GROUP BY p.ProductID, p.ProductName, p.UnitPrice
+	   classes.avgprice
+FROM product_history as p
+	   inner JOIN classes ON p.categoryid = classes.categoryid
+WHERE p.unitprice > classes.avgprice
 ```
 
 - Polecenie z wykorzystaniem funkcji okna
 
 ```sql
-SELECT p.ProductID,
+WITH data as
+(SELECT p.ProductID,
        p.ProductName,
        p.UnitPrice,
-       AVG(UnitPrice) OVER() AS AveragePrice
-FROM product_history AS p
+       AVG(UnitPrice) OVER(PARTITION BY p.CategoryID) AS AveragePrice
+FROM product_history AS p)
+SELECT * from data
+WHERE UnitPrice > AveragePrice
 ```
 
 Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
