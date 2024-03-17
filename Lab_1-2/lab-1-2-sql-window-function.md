@@ -79,12 +79,12 @@ select avg(unitprice) over (partition by categoryid) as avgprice
 from products p;
 ```
 
-Jaka jest są podobieństwa, jakie różnice pomiędzy grupowaniem danych a działaniem funkcji okna?
+Jaka są podobieństwa, jakie różnice pomiędzy grupowaniem danych a działaniem funkcji okna?
 
 Widzimy, że funkcje okna przypisują obliczoną wartość każdemu wierszowi danych.
 Grupowanie automatycznie agreguje wartości do grup.
 
-| Zadanie | MySQL                     | Postgres                   | SQLite                   |
+| Zapytanie | MySQL                     | Postgres                   | SQLite                   |
 |---------|---------------------------|----------------------------|--------------------------|
 | 1       | ![](./img/ex1/mysql1.png) | ![](img/ex1/postgres1.png) | ![](img/ex1/sqlite1.png) |
 | 2       | ![](./img/ex1/mysql2.png) | ![](img/ex1/postgres2.png) | ![](img/ex1/sqlite2.png) |
@@ -138,17 +138,9 @@ Jaka jest różnica? Czego dotyczy warunek w każdym z przypadków? Napisz polec
 
 Baza: Northwind, tabela: products
 
-1. Napisz polecenie, które zwraca: id produktu, nazwę produktu, cenę produktu, średnią cenę wszystkich produktów.
+Napisz polecenie, które zwraca: id produktu, nazwę produktu, cenę produktu, średnią cenę wszystkich produktów.
 
-```sql
-SELECT p.ProductID,
-       p.ProductName,
-       p.UnitPrice,
-       AVG(p.UnitPrice) AS AveragePrice
-FROM Products AS p
-```
-
-2. Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj czasy oraz plany
+Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj czasy oraz plany
    wykonania zapytań.
 
 - Polecenie z wykorzystaniem podzapytania
@@ -217,24 +209,9 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 
 Baza: Northwind, tabela products
 
-1. Napisz polecenie, które zwraca: id produktu, nazwę produktu, cenę produktu, średnią cenę produktów w kategorii, do
-   której należy dany produkt. Wyświetl tylko pozycje (produkty), których cena jest większa niż średnia cena.
+Napisz polecenie, które zwraca: id produktu, nazwę produktu, cenę produktu, średnią cenę produktów w kategorii, do której należy dany produkt. Wyświetl tylko pozycje (produkty), których cena jest większa niż średnia cena.
 
-```sql
-SELECT p.ProductID,
-       p.ProductName,
-       p.UnitPrice,
-       AVG(p2.UnitPrice) AS AvgCategoryPrice
-FROM Products p
-         JOIN
-     Products p2 ON p.CategoryID = p2.CategoryID
-GROUP BY p.ProductID,
-         p.ProductName,
-         p.UnitPrice
-HAVING p.UnitPrice > AVG(p2.UnitPrice)
-```
-
-2. Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. Porównaj czasy oraz
+Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. Porównaj czasy oraz
    plany wykonania zapytań.
 
 - Polecenie z wykorzystaniem podzapytania
@@ -258,11 +235,11 @@ WHERE p.UnitPrice > (SELECT AVG(p3.UnitPrice)
 SELECT p.ProductID,
        p.ProductName,
        p.UnitPrice,
-       AVG(p2.UnitPrice) OVER (PARTITION BY p.CategoryID) AS AvgCategoryPrice
+       AVG(p2.UnitPrice) AS AvgCategoryPrice
 FROM Products p
          JOIN
      Products p2 ON p.CategoryID = p2.CategoryID
-WHERE p.UnitPrice > AVG(p2.UnitPrice) OVER (PARTITION BY p.CategoryID);
+WHERE p.UnitPrice > AVG(p2.UnitPrice)
 ```
 
 - Polecenie z wykorzystaniem funkcji okna
@@ -416,26 +393,22 @@ Baza: Northwind, tabela product_history
 
 To samo co w zadaniu 3, ale dla większego zbioru danych
 
-1. Napisz polecenie, które zwraca: id pozycji, id produktu, nazwę produktu, cenę produktu, średnią cenę produktów w
+Napisz polecenie, które zwraca: id pozycji, id produktu, nazwę produktu, cenę produktu, średnią cenę produktów w
    kategorii do której należy dany produkt. Wyświetl tylko pozycje (produkty) których cena jest większa niż średnia
-   cena.
-
-```sql
-
-```
-
-2. Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. Porównaj czasy oraz
+   cena. Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. Porównaj czasy oraz
    plany
    wykonania zapytań.
 
 - Polecenie z wykorzystaniem podzapytania
 
 ```sql
-SELECT p.ProductID,
-       p.ProductName,
-       p.UnitPrice,
+SELECT ph.id,
+       ph.productid,
+       ph.productname,
+       ph.unitpricde
+    
        (SELECT AVG(p2.UnitPrice) FROM Products AS p2) AS AveragePrice
-FROM product_history AS p
+FROM product_history AS ph
 ```
 
 - Polecenie z wykorzystaniem joina
@@ -479,31 +452,25 @@ Baza: Northwind, tabela product_history
 
 Lekka modyfikacja poprzedniego zadania
 
-1. Napisz polecenie, które zwraca: id pozycji, id produktu, nazwę produktu, cenę produktu oraz:
-    - średnią cenę produktów w kategorii do której należy dany produkt.
-    - łączną wartość sprzedaży produktów danej kategorii (suma dla pola value)
-    - średnią cenę danego produktu w roku którego dotyczy dana pozycja
-    - łączną wartość sprzedaży produktów danej kategorii (suma dla pola value) (powtórzone???)
+Napisz polecenie, które zwraca: id pozycji, id produktu, nazwę produktu, cenę produktu oraz:
+- średnią cenę produktów w kategorii do której należy dany produkt.
+- łączną wartość sprzedaży produktów danej kategorii (suma dla pola value)
+- średnią cenę danego produktu w roku którego dotyczy dana pozycja
+- łączną wartość sprzedaży produktów danej kategorii (suma dla pola value) (powtórzone???)
 
-```sql
 
-```
-
-2. Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. W przypadku funkcji
+Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. W przypadku funkcji
    okna spróbuj użyć klauzuli WINDOW.
 
 ```sql
-SELECT p.id,
-       p.ProductID,
-       p.ProductName,
-       p.UnitPrice,
-	   avg(p.unitprice) over category_window as avgPrice,
-	   sum(p.value) over category_window as categoryValue,
-	   avg(p.unitprice) over yearly_window as yearlyAvgPrice
-FROM product_history AS p
-WINDOW 
-    category_window AS (PARTITION BY p.CategoryID),
-    yearly_window AS (PARTITION BY YEAR(p.Date))
+SELECT ph.id,
+       ph.ProductID,
+       ph.ProductName,
+       ph.UnitPrice,
+	   (select avg(ph2.unitprice) from product_history as ph2 where ph.categoryid = ph2.categoryid) as AveragePrice,
+	   (select sum(ph3.value) from product_history as ph3 where ph.categoryid = ph3.categoryid) as TotalSale,
+	   (select avg(ph4.unitprice) from product_history as ph4 where ph.productid = ph4.productid and YEAR(ph.date) = YEAR(ph4.date)) as AveragePriceOverYear
+FROM product_history AS ph
 ```
 
 
@@ -604,8 +571,8 @@ order by date;
 
 | Funkcje | MySQL                      | Postgres                    | SQLite                    |
 |---------|----------------------------|-----------------------------|---------------------------|
-| lag()   | ![](./img/ex10/mysql1.png) | ![](img/ex10/postgres1.png) | ![](img/ex10/sqlite1.png) |
-| lead()  | ![](./img/ex10/mysql2.png) | ![](img/ex10/postgres2.png) | ![](img/ex10/sqlite2.png) |
+| 1   | ![](./img/ex10/mysql1.png) | ![](img/ex10/postgres1.png) | ![](img/ex10/sqlite1.png) |
+| 2  | ![](./img/ex10/mysql2.png) | ![](img/ex10/postgres2.png) | ![](img/ex10/sqlite2.png) |
 
 **Zadanie**
 
@@ -616,10 +583,10 @@ różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 -- wyniki ...
 ```
 
-| Funkcje | MySQL                      | Postgres                    | SQLite                    |
+| Polecenie | MySQL                      | Postgres                    | SQLite                    |
 |---------|----------------------------|-----------------------------|---------------------------|
-| lag()   | ![](./img/ex11/mysql1.png) | ![](img/ex11/postgres1.png) | ![](img/ex11/sqlite1.png) |
-| lead()  | ![](./img/ex11/mysql2.png) | ![](img/ex11/postgres2.png) | ![](img/ex11/sqlite2.png) |
+| 1       | ![](./img/ex11/mysql1.png) | ![](img/ex11/postgres1.png) | ![](img/ex11/sqlite1.png) |
+| 2       | ![](./img/ex11/mysql2.png) | ![](img/ex11/postgres2.png) | ![](img/ex11/sqlite2.png) |
 
 ---
 
@@ -639,7 +606,7 @@ Zbiór wynikowy powinien zawierać:
 - wartość poprzedniego zamówienia danego klienta.
 
 ```sql
--- wyniki ...
+SELECT 
 ```
 
 ---
