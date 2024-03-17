@@ -545,9 +545,9 @@ select productid,
 from products;
 ```
 
-| MySQL                     | Postgres                   | SQLite                   |
-|---------------------------|----------------------------|--------------------------|
-| ![](./img/ex8/mysql1.png) | ![](img/ex8/postgres1.png) | ![](img/ex8/sqlite1.png) |
+| MySQL                     | 
+|---------------------------|
+| ![](./img/ex8/mysql1.png) | 
 
 **Zadanie**
 
@@ -593,16 +593,117 @@ Dla każdego produktu, podaj 4 najwyższe ceny tego produktu w danym roku. Zbió
 
 Uporządkuj wynik wg roku, nr produktu, pozycji w rankingu
 
-| MySQL                     | Postgres                   | SQLite                   |
-|---------------------------|----------------------------|--------------------------|
-| ![](./img/ex9/mysql1.png) | ![](img/ex9/postgres1.png) | ![](img/ex9/sqlite1.png) |
+```sql
+WITH ranked_prices AS (
+  SELECT
+    YEAR(date) AS year, p.productid, p.ProductName, p.unitprice, p.date,
+    ROW_NUMBER() OVER(PARTITION BY p.productid, YEAR(date) ORDER BY p.unitprice DESC) AS pricerank
+  FROM product_history as p
+  INNER JOIN products ON p.productid = products.ProductID
+)
+
+SELECT year, productid, productname, unitprice, date, pricerank
+FROM ranked_prices
+WHERE pricerank <= 4
+ORDER BY year, productid, pricerank;
+```
+
+| MySQL                     | 
+|---------------------------|
+| ![](./img/ex9/mysql1.png) | 
 
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w
 różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
+```sql
+WITH ranked_prices AS (
+  SELECT
+    YEAR(date) AS year,
+    p.productid,
+    p.ProductName,
+    p.unitprice,
+    p.date,
+	(SELECT COUNT(*) + 1 FROM product_history p2
+     WHERE p2.productid = p.productid
+         AND p2.unitprice > p.unitprice AND YEAR(p.date) = YEAR(p2.date)) as pricerank
+  FROM product_history as p
+  INNER JOIN products ON p.productid = products.ProductID
+)
+
+SELECT
+  year,
+  productid,
+  productname,
+  unitprice,
+  date,
+  pricerank
+FROM
+  ranked_prices
+WHERE
+  pricerank <= 4
+ORDER BY
+  year,
+  productid,
+  pricerank;
+```
+
+Czas działania dla mysql był bardzo długi i nie uzyskaliśmy wyniku w rozsądnym czasie.
+
+Dla postgres musieliśmy użyć innej składni by wywołać zapytanie, jednak dalej jego czas obliczeń nie był skończony w rozsądnym czasie
+
+```sql
+WITH ranked_prices AS (
+  SELECT
+    extract ("YEAR" from (p.date)) AS year,
+    p.productid,p.ProductName,p.unitprice,p.date,
+	(SELECT COUNT(*) + 1 FROM product_history p2
+     WHERE p2.productid = p.productid
+         AND p2.unitprice > p.unitprice AND extract ("YEAR" from (p.date)) = extract ("YEAR" from (p2.date))) as pricerank
+  FROM product_history as p
+  INNER JOIN products ON p.productid = products.ProductID
+)
+
+SELECT
+  year,
+  productid,productname,unitprice,date,pricerank
+FROM
+  ranked_prices
+WHERE
+  pricerank <= 4
+ORDER BY
+  year,productid,pricerank;
+```
+
+Składnia wyboru roku różniła się również dla sqlite. Również czas nie był zadowalający i nie dostaliśmy wyniku
+
+```sql
+WITH ranked_prices AS (
+    SELECT
+        strftime('%Y',p.date) AS year,
+        p.productid,p.ProductName,p.unitprice,p.date,
+        (SELECT COUNT(*) + 1 FROM product_history p2
+         WHERE p2.productid = p.productid
+           AND p2.unitprice > p.unitprice AND strftime('%Y',p.date) = strftime('%Y',p2.date)) as pricerank
+    FROM product_history as p
+             INNER JOIN products ON p.productid = products.ProductID
+)
+
+SELECT
+    year,productid,productname,unitprice,date,pricerank
+FROM
+    ranked_prices
+WHERE
+    pricerank <= 4
+ORDER BY
+    year,productid,pricerank;
+```
+
 | MySQL                     | Postgres                   | SQLite                   |
 |---------------------------|----------------------------|--------------------------|
 | ![](./img/ex9/mysql2.png) | ![](img/ex9/postgres2.png) | ![](img/ex9/sqlite2.png) |
+
+
+
 
 ---
 
@@ -633,10 +734,11 @@ where productid = 1 and year (date) = 2022
 order by date;
 ```
 
-| Funkcje | MySQL                      | Postgres                    | SQLite                    |
-|---------|----------------------------|-----------------------------|---------------------------|
-| lag()   | ![](./img/ex10/mysql1.png) | ![](img/ex10/postgres1.png) | ![](img/ex10/sqlite1.png) |
-| lead()  | ![](./img/ex10/mysql2.png) | ![](img/ex10/postgres2.png) | ![](img/ex10/sqlite2.png) |
+Funkcje lead i follow zwracają przesuniętą kolumnę. odpowiednio w dół lub w górę. tzn. użwając lag dostaniemy wartość która w wybranej kolumnie pojawiła się 1 rząd wyżej
+
+| MySQL                      | 
+|----------------------------|
+| ![](./img/ex10/mysql0.png) |
 
 **Zadanie**
 
@@ -646,11 +748,17 @@ różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 ```sql
 -- wyniki ...
 ```
+Wykonanie zapytania bez funkcji okna okazało się być zbyt trudne dlatego możemy dokonać porównania funkcji okna dla różnych SZBD
 
-| Funkcje | MySQL                      | Postgres                    | SQLite                    |
-|---------|----------------------------|-----------------------------|---------------------------|
-| lag()   | ![](./img/ex11/mysql1.png) | ![](img/ex11/postgres1.png) | ![](img/ex11/sqlite1.png) |
-| lead()  | ![](./img/ex11/mysql2.png) | ![](img/ex11/postgres2.png) | ![](img/ex11/sqlite2.png) |
+SSMS nie zapełnia możliwości wykonania czytelnego zrzutu ekranu dla planu wykonania. Jest on jestnak sekwencyjny. Czas trwania jest niemal natychmiastowy
+
+dla postgres czas wykonania wyniósł ponad sekundę. Dodatkowu znowu należało zamienić `year (date)` na `extract ("YEAR" from date)` 
+
+Sqlite zwrócił puste tabele pomimo użycia funkcji `strftime('%Y',date)` do wydobycia daty
+
+| MySQL                      | Postgres                    | SQLite                    |
+|----------------------------|-----------------------------|---------------------------|
+| ![](./img/ex10/mysql1.png) | ![](img/ex10/postgres1.png) | ![](img/ex10/sqlite1.png) |
 
 ---
 
@@ -670,8 +778,25 @@ Zbiór wynikowy powinien zawierać:
 - wartość poprzedniego zamówienia danego klienta.
 
 ```sql
--- wyniki ...
+SELECT 
+        c.CompanyName AS CustomerName,
+        o.OrderID,
+        o.OrderDate,
+        od.UnitPrice * od.Quantity + o.freight AS OrderValue,
+        LAG(o.OrderID) OVER (PARTITION BY o.CustomerID ORDER BY o.OrderDate) AS PreviousOrderID,
+        LAG(o.OrderDate) OVER (PARTITION BY o.CustomerID ORDER BY o.OrderDate) AS PreviousOrderDate,
+        LAG(od.UnitPrice * od.Quantity + o.freight) OVER (PARTITION BY o.CustomerID ORDER BY o.OrderDate) AS PreviousOrderValue
+    FROM 
+        Orders o
+    INNER JOIN 
+        Customers c ON o.CustomerID = c.CustomerID
+    INNER JOIN 
+        OrderDetails od ON o.OrderID = od.OrderID
 ```
+
+| MySQL                      |
+|----------------------------|
+| ![](./img/ex11/mysql1.png) |
 
 ---
 
@@ -738,8 +863,32 @@ Zbiór wynikowy powinien zawierać:
     - wartość tego zamówienia
 
 ```sql
---- wyniki ...
+SELECT 
+    CustomerID,
+    OrderID,
+    OrderDate,
+    TotalOrderValue,
+    FIRST_VALUE(OrderID) OVER (PARTITION BY CustomerID, YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue ASC) AS LowestValueOrderID,
+    FIRST_VALUE(OrderDate) OVER (PARTITION BY CustomerID, YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue ASC) AS LowestValueOrderDate,
+    FIRST_VALUE(TotalOrderValue) OVER (PARTITION BY CustomerID, YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue ASC) AS LowestValueOrderValue,
+    LAST_VALUE(OrderID) OVER (PARTITION BY CustomerID, YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue DESC) AS HighestValueOrderID,
+    LAST_VALUE(OrderDate) OVER (PARTITION BY CustomerID, YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue DESC) AS HighestValueOrderDate,
+    LAST_VALUE(TotalOrderValue) OVER (PARTITION BY CustomerID, YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue DESC) AS HighestValueOrderValue
+FROM (
+    SELECT 
+        Orders.CustomerID,
+        Orders.OrderID,
+        Orders.OrderDate,
+        (SUM(od.UnitPrice * od.Quantity) OVER (PARTITION BY Orders.OrderID)) + Orders.freight AS TotalOrderValue
+    FROM Orders
+    JOIN [Order Details] as od ON Orders.OrderID = od.OrderID
+) AS OrderSummary
 ```
+
+| MySQL                      |
+|----------------------------|
+| ![](./img/ex13/mysql1.png) |
+
 
 ---
 
