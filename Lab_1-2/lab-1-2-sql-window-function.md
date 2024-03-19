@@ -798,7 +798,7 @@ order by categoryid, unitprice desc;
 |-----------------------------|
 | ![](./img/ex12/sqlite1.png) |
 
-Funkcje first_value, oraz last_value zwracają odpowiednio pierwszy i ostatni element w danej partycji/grupie, a przynajmniej powinny. Okzuje się, że last_value
+Funkcje first_value, oraz last_value zwracają odpowiednio pierwszy i ostatni element w danej partycji/grupie, a przynajmniej powinny. Okzuje się, że last_value nie działa tak jak powinno. Wygląda na to, że działa błędnie.
 
 **Zadanie**
 
