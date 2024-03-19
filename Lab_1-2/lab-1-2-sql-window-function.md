@@ -189,12 +189,6 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 
 ![w:700](./img/ex3/window-3.png)
 
-| Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
-|--------------|---------------------------|----------------------------|--------------------------|
-| Podzapytanie | ![](./img/ex3/mysql1.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
-| Join         | ![](./img/ex3/mysql2.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
-| Funkcja okna | ![](./img/ex3/mysql3.png) | ![](img/ex3/postgres3.png) | ![](img/ex3/sqlite3.png) |
-
 **Porównanie czasów wykonania**
 
 | Zapytanie    | MySQL                         | Postgres                       | SQLite                   |
@@ -202,6 +196,16 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 | Podzapytanie | ![](./img/ex3/mysql1time.png) | ![](img/ex3/postgres1time.png) | ![](img/ex3/sqlite1time.png) |
 | Join         | ![](./img/ex3/mysql2time.png) | ![](img/ex3/postgres2time.png) | ![](img/ex3/sqlite2time.png) |
 | Funkcja okna | ![](./img/ex3/mysql3time.png) | ![](img/ex3/postgres3time.png) | ![](img/ex3/sqlite3time.png) |
+
+**Porównanie planów wykonania**
+
+| Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
+|--------------|---------------------------|----------------------------|--------------------------|
+| Podzapytanie | ![](./img/ex3/mysql1.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
+| Join         | ![](./img/ex3/mysql2.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
+| Funkcja okna | ![](./img/ex3/mysql3.png) | ![](img/ex3/postgres3.png) | ![](img/ex3/sqlite3.png) |
+
+Sqlite nie daje pełnej możliwości zwizualizowania planu. Datagrip pozwala jednak na zrobienie tego z Postgresem. 
 
 ---
 
@@ -512,10 +516,6 @@ select productid,
 from products;
 ```
 
-| MySQL                     | 
-|---------------------------|
-| ![](./img/ex8/mysql1.png) | 
-
 **Zadanie**
 
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna
@@ -535,9 +535,13 @@ SELECT
 	(SELECT COUNT(DISTINCT p2.unitprice) + 1 FROM products p2
      WHERE p2.categoryid = p1.categoryid
          AND p2.unitprice > p1.unitprice) AS denserankprice
-FROM 
+FROM
     products p1
 ORDER BY p1.categoryid, rowno;
+
+| MySQL                     | 
+|---------------------------|
+| ![](./img/ex8/mysql1.png) | 
 
 ```
 Widać zasadniczą różnicę działania dla kolumny `rowno`
@@ -789,9 +793,11 @@ from products
 order by categoryid, unitprice desc;
 ```
 
-```sql
--- wyniki ...
-```
+| SQLite                      |
+|-----------------------------|
+| ![](./img/ex12/sqlite1.png) |
+
+Funkcje first_value, oraz last_value zwracają odpowiednio pierwszy i ostatni element w danej partycji/grupie, a przynajmniej powinny. Okzuje się, że last_value
 
 **Zadanie**
 
@@ -799,12 +805,54 @@ Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czas
 różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
 ```sql
--- wyniki ...
+SELECT p.productid,
+       p.productname,
+       p.unitprice,
+       p.categoryid,
+       (SELECT top 1 productname 
+        FROM products 
+        WHERE categoryid = p.categoryid 
+        ORDER BY unitprice DESC) AS first,
+       (SELECT top 1 productname 
+        FROM products 
+        WHERE categoryid = p.categoryid and unitprice = p.unitprice
+        ORDER BY unitprice ASC) as last
+FROM products p
+ORDER BY p.categoryid, p.unitprice DESC;
 ```
+
+Dla Postgresa i SQLite zamiast top 1 trzeba użyć limit 1
+
+```sql
+SELECT p.productid,
+       p.productname,
+       p.unitprice,
+       p.categoryid,
+       (SELECT  productname
+        FROM products
+        WHERE categoryid = p.categoryid
+        ORDER BY unitprice DESC limit 1) AS first,
+       (SELECT productname
+        FROM products
+        WHERE categoryid = p.categoryid and unitprice = p.unitprice
+        ORDER BY unitprice ASC limit 1) as last
+FROM products p
+ORDER BY p.categoryid, p.unitprice DESC;
+```
+
+Bez użycia funkcji okna możemy uzyskać wyniki których potrzebujemy.
+
+Wyniki i czasy
 
 | MySQL                      | Postgres                    | SQLite                    |
 |----------------------------|-----------------------------|---------------------------|
-| ![](./img/ex12/mysql1.png) | ![](img/ex12/postgres1.png) | ![](img/ex12/sqlite1.png) |
+| ![](./img/ex12/mysql2.png) | ![](img/ex12/postgres2.png) | ![](img/ex12/sqlite2.png) |
+
+Plany
+
+| MySQL                      | Postgres                    | SQLite                    |
+|----------------------------|-----------------------------|---------------------------|
+| ![](./img/ex12/mysql3.png) | ![](img/ex12/postgres3.png) | ![](img/ex12/sqlite3.png) |
 
 ---
 
@@ -875,19 +923,95 @@ Zbiór wynikowy powinien zawierać:
 - wartość sprzedaży produktu narastające od początku miesiąca
 
 ```sql
--- wyniki ...
+SELECT 
+    id,
+    productid,
+    date,
+    value,
+    SUM(value) OVER (PARTITION BY productid, YEAR(date), MONTH(date) ORDER BY date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_value
+    from product_history
+ORDER by
+	productid,
+    YEAR(date),
+    MONTH(date),
+    date;
 ```
 
 Spróbuj wykonać zadanie bez użycia funkcji okna. Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki,
 czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
 ```sql
--- wyniki ...
+SELECT 
+    ph.id,
+    ph.productid,
+    ph.date,
+    ph.value,
+    (SELECT SUM(ph_inner.value) 
+     FROM product_history ph_inner
+     WHERE ph_inner.productid = ph.productid 
+     AND YEAR(ph_inner.date) = YEAR(ph.date) 
+     AND MONTH(ph_inner.date) = MONTH(ph.date) 
+     AND ph_inner.date <= ph.date) AS cumulative_value
+FROM 
+    product_history ph
+ORDER BY
+    ph.productid,
+    YEAR(ph.date),
+    MONTH(ph.date),
+    ph.date;
 ```
+
+wersja dla Postgres
+```sql
+SELECT 
+    ph.id,
+    ph.productid,
+    ph.date,
+    ph.value,
+    (SELECT SUM(ph_inner.value) 
+     FROM product_history ph_inner
+     WHERE ph_inner.productid = ph.productid 
+     AND extract (year from ph_inner.date) = extract (year from ph.date)
+     AND extract (month from ph_inner.date) = extract (month from ph.date)
+     AND ph_inner.date <= ph.date) AS cumulative_value
+FROM 
+    product_history ph
+ORDER BY
+    ph.productid,
+    extract (year from ph.date),
+    extract (month from ph.date),
+    ph.date;
+```
+
+Wersja dla SQLite 
+```sql
+SELECT
+    ph.id,
+    ph.productid,
+    ph.date,
+    ph.value,
+    (SELECT SUM(ph_inner.value)
+     FROM product_history ph_inner
+     WHERE ph_inner.productid = ph.productid
+       AND strftime('%Y',ph_inner.date) = strftime('%Y',ph.date)
+       AND strftime('%M',ph_inner.date) = strftime('%M',ph.date)
+       AND ph_inner.date <= ph.date) AS cumulative_value
+FROM
+    product_history ph
+ORDER BY
+    ph.productid,
+    strftime('%Y',ph.date),
+    strftime('%M',ph.date),
+    ph.date;
+```
+
+Dla żadnego SZBD zapytanie nie skończyło się w rozsądnym czasie więc przedstawiy analizę planu wykonania
 
 | MySQL                      | Postgres                    | SQLite                    |
 |----------------------------|-----------------------------|---------------------------|
-| ![](./img/ex12/mysql1.png) | ![](img/ex12/postgres1.png) | ![](img/ex12/sqlite1.png) |
+| ![](./img/ex14/mysql1.png) | ![](img/ex14/postgres1.png) | ![](img/ex14/sqlite1.png) |
+
+Jak widzimy plan wykonania dla mysql jest znacznie bardziej rozbudowany niż dla sqlite i postgres
 
 ---
 
