@@ -538,15 +538,16 @@ SELECT
 FROM
     products p1
 ORDER BY p1.categoryid, rowno;
+```
 
 | MySQL                     | 
 |---------------------------|
 | ![](./img/ex8/mysql1.png) | 
 
-```
 Widać zasadniczą różnicę działania dla kolumny `rowno`
 zwiększanie wartość musiałaby rosnąć dla zbioru produktów o tej samej cenie.
 Nie jest to trywialne bez funkcji okna (przynajmniej dla studenta który się uczy)
+
 ---
 
 # Zadanie 9
