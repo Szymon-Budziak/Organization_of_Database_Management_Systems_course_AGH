@@ -6,6 +6,9 @@
 
 **Imię i nazwisko:**
 
+- Szymon Budziak
+- Piotr Ludynia
+
 ---
 
 Celem ćwiczenia jest zapoznanie się z działaniem funkcji okna (window functions) w SQL, analiza wydajności zapytań i
@@ -33,10 +36,10 @@ Do wykonania ćwiczenia potrzebne jest następujące oprogramowanie:
 - PostgreSQL - wersja 15/16
 - SQLite
 - Narzędzia do komunikacji z bazą danych
-    - SSMS - Microsoft SQL Managment Studio
-    - DtataGrip lub DBeaver
+  - SSMS - Microsoft SQL Managment Studio
+  - DtataGrip lub DBeaver
 - Przykładowa baza Northwind
-    - W wersji dla każdego z wymienionych serwerów
+  - W wersji dla każdego z wymienionych serwerów
 
 Oprogramowanie dostępne jest na przygotowanej maszynie wirtualnej
 
@@ -48,15 +51,15 @@ Oprogramowanie dostępne jest na przygotowanej maszynie wirtualnej
 - Kilka linków do materiałów które mogą być
   pomocne - https://learn.microsoft.com/en-us/sql/t-sql/queries/select-over-clause-transact-sql?view=sql-server-ver16
 
-    - https://www.sqlservertutorial.net/sql-server-window-functions/
-    - https://www.sqlshack.com/use-window-functions-sql-server/
-    - https://www.postgresql.org/docs/current/tutorial-window.html
-    - https://www.postgresqltutorial.com/postgresql-window-function/
-    - https://www.sqlite.org/windowfunctions.html
-    - https://www.sqlitetutorial.net/sqlite-window-functions/
+  - https://www.sqlservertutorial.net/sql-server-window-functions/
+  - https://www.sqlshack.com/use-window-functions-sql-server/
+  - https://www.postgresql.org/docs/current/tutorial-window.html
+  - https://www.postgresqltutorial.com/postgresql-window-function/
+  - https://www.sqlite.org/windowfunctions.html
+  - https://www.sqlitetutorial.net/sqlite-window-functions/
 
 - Ikonki używane w graficznej prezentacji planu zapytania w SSMS opisane są tutaj:
-    - [https://docs.microsoft.com/en-us/sql/relational-databases/showplan-logical-and-physical-operators-reference](https://docs.microsoft.com/en-us/sql/relational-databases/showplan-logical-and-physical-operators-reference)
+  - [https://docs.microsoft.com/en-us/sql/relational-databases/showplan-logical-and-physical-operators-reference](https://docs.microsoft.com/en-us/sql/relational-databases/showplan-logical-and-physical-operators-reference)
 
 ---
 
@@ -85,11 +88,11 @@ Widzimy, że funkcje okna przypisują obliczoną wartość każdemu wierszowi da
 Grupowanie automatycznie agreguje wartości do grup.
 
 | Zapytanie | MySQL                     | Postgres                   | SQLite                   |
-|---------|---------------------------|----------------------------|--------------------------|
-| 1       | ![](./img/ex1/mysql1.png) | ![](img/ex1/postgres1.png) | ![](img/ex1/sqlite1.png) |
-| 2       | ![](./img/ex1/mysql2.png) | ![](img/ex1/postgres2.png) | ![](img/ex1/sqlite2.png) |
-| 3       | ![](./img/ex1/mysql3.png) | ![](img/ex1/postgres3.png) | ![](img/ex1/sqlite3.png) |
-| 4       | ![](./img/ex1/mysql4.png) | ![](img/ex1/postgres4.png) | ![](img/ex1/sqlite4.png) |
+| --------- | ------------------------- | -------------------------- | ------------------------ |
+| 1         | ![](./img/ex1/mysql1.png) | ![](img/ex1/postgres1.png) | ![](img/ex1/sqlite1.png) |
+| 2         | ![](./img/ex1/mysql2.png) | ![](img/ex1/postgres2.png) | ![](img/ex1/sqlite2.png) |
+| 3         | ![](./img/ex1/mysql3.png) | ![](img/ex1/postgres3.png) | ![](img/ex1/sqlite3.png) |
+| 4         | ![](./img/ex1/mysql4.png) | ![](img/ex1/postgres4.png) | ![](img/ex1/sqlite4.png) |
 
 # Zadanie 2 - obserwacja
 
@@ -128,7 +131,7 @@ Jaka jest różnica? Czego dotyczy warunek w każdym z przypadków? Napisz polec
    identyfikatora produktu mniejszego niż 10.
 
 | Zapytanie    | MySQL                      | Postgres                    | SQLite                    |
-|--------------|----------------------------|-----------------------------|---------------------------|
+| ------------ | -------------------------- | --------------------------- | ------------------------- |
 | 1 oryginalne | ![](./img/ex2/mysql11.png) | ![](img/ex2/postgres11.png) | ![](img/ex2/sqlite11.png) |
 | 1 równoważne | ![](./img/ex2/mysql12.png) | ![](img/ex2/postgres12.png) | ![](img/ex2/sqlite12.png) |
 | 2 oryginalne | ![](./img/ex2/mysql21.png) | ![](img/ex2/postgres21.png) | ![](img/ex2/sqlite21.png) |
@@ -141,7 +144,7 @@ Baza: Northwind, tabela: products
 Napisz polecenie, które zwraca: id produktu, nazwę produktu, cenę produktu, średnią cenę wszystkich produktów.
 
 Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj czasy oraz plany
-   wykonania zapytań.
+wykonania zapytań.
 
 - Polecenie z wykorzystaniem podzapytania
 
@@ -189,10 +192,16 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 
 ![w:700](./img/ex3/window-3.png)
 
+| Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
+| ------------ | ------------------------- | -------------------------- | ------------------------ |
+| Podzapytanie | ![](./img/ex3/mysql1.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
+| Join         | ![](./img/ex3/mysql2.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
+| Funkcja okna | ![](./img/ex3/mysql3.png) | ![](img/ex3/postgres3.png) | ![](img/ex3/sqlite3.png) |
+
 **Porównanie czasów wykonania**
 
-| Zapytanie    | MySQL                         | Postgres                       | SQLite                   |
-|--------------|-------------------------------|--------------------------------|--------------------------|
+| Zapytanie    | MySQL                         | Postgres                       | SQLite                       |
+| ------------ | ----------------------------- | ------------------------------ | ---------------------------- |
 | Podzapytanie | ![](./img/ex3/mysql1time.png) | ![](img/ex3/postgres1time.png) | ![](img/ex3/sqlite1time.png) |
 | Join         | ![](./img/ex3/mysql2time.png) | ![](img/ex3/postgres2time.png) | ![](img/ex3/sqlite2time.png) |
 | Funkcja okna | ![](./img/ex3/mysql3time.png) | ![](img/ex3/postgres3time.png) | ![](img/ex3/sqlite3time.png) |
@@ -216,7 +225,7 @@ Baza: Northwind, tabela products
 Napisz polecenie, które zwraca: id produktu, nazwę produktu, cenę produktu, średnią cenę produktów w kategorii, do której należy dany produkt. Wyświetl tylko pozycje (produkty), których cena jest większa niż średnia cena.
 
 Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. Porównaj czasy oraz
-   plany wykonania zapytań.
+plany wykonania zapytań.
 
 - Polecenie z wykorzystaniem podzapytania
 
@@ -241,9 +250,12 @@ SELECT p.ProductID,
        p.UnitPrice,
        AVG(p2.UnitPrice) AS AvgCategoryPrice
 FROM Products p
-         JOIN
-     Products p2 ON p.CategoryID = p2.CategoryID
-WHERE p.UnitPrice > AVG(p2.UnitPrice)
+         JOIN Products AS p2 ON p.CategoryID = p2.CategoryID
+GROUP BY
+    p.ProductID,
+    p.ProductName,
+    p.UnitPrice
+HAVING p.UnitPrice > AVG(p2.UnitPrice)
 ```
 
 - Polecenie z wykorzystaniem funkcji okna
@@ -265,7 +277,7 @@ WHERE UnitPrice > AvgCategoryPrice;
 Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
 | Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
-|--------------|---------------------------|----------------------------|--------------------------|
+| ------------ | ------------------------- | -------------------------- | ------------------------ |
 | Podzapytanie | ![](./img/ex4/mysql1.png) | ![](img/ex4/postgres1.png) | ![](img/ex4/sqlite1.png) |
 | Join         | ![](./img/ex4/mysql2.png) | ![](img/ex4/postgres2.png) | ![](img/ex4/sqlite2.png) |
 | Funkcja okna | ![](./img/ex4/mysql3.png) | ![](img/ex4/postgres3.png) | ![](img/ex4/sqlite3.png) |
@@ -386,7 +398,7 @@ where 1 = 1;
 Wykonaj polecenia: `select count(*) from product_history`, potwierdzające wykonanie zadania
 
 | MySQL                     | Postgres                   | SQLite                   |
-|---------------------------|----------------------------|--------------------------|
+| ------------------------- | -------------------------- | ------------------------ |
 | ![](./img/ex5/mysql1.png) | ![](img/ex5/postgres1.png) | ![](img/ex5/sqlite1.png) |
 
 ---
@@ -397,7 +409,15 @@ Baza: Northwind, tabela product_history
 
 To samo co w zadaniu 3, ale dla większego zbioru danych
 
-Napisz polecenie, które zwraca: id pozycji, id produktu, nazwę produktu, cenę produktu, średnią cenę produktów w kategorii do której należy dany produkt. Wyświetl tylko pozycje (produkty) których cena jest większa niż średnia cena.
+Napisz polecenie, które zwraca:
+
+- id pozycji,
+- id produktu,
+- nazwę produktu,
+- cenę produktu,
+- średnią cenę produktów w kategorii do której należy dany produkt.
+
+Wyświetl tylko pozycje (produkty) których cena jest większa niż średnia cena.
 
 (przykłady poniżej)
 
@@ -409,13 +429,13 @@ Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porów
 SELECT p.ProductID,
 	   p.ProductName,
        p.UnitPrice,
-	   (SELECT AVG(ph.UnitPrice) 
-	    FROM product_history ph 
+	   (SELECT AVG(ph.UnitPrice)
+	    FROM product_history ph
 	    WHERE ph.CategoryID = p.CategoryID) as avgprice
 FROM product_history as p
-WHERE p.UnitPrice > 
-      (SELECT AVG(ph.UnitPrice) 
-       FROM product_history ph 
+WHERE p.UnitPrice >
+      (SELECT AVG(ph.UnitPrice)
+       FROM product_history ph
        WHERE ph.CategoryID = p.CategoryID)
 ```
 
@@ -452,7 +472,7 @@ WHERE UnitPrice > AveragePrice
 Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
 | Zadanie | MySQL                     | Postgres                   | SQLite                   |
-|---------|---------------------------|----------------------------|--------------------------|
+| ------- | ------------------------- | -------------------------- | ------------------------ |
 | 1       | ![](./img/ex6/mysql1.png) | ![](img/ex6/postgres1.png) | ![](img/ex6/sqlite1.png) |
 | 2       | ![](./img/ex6/mysql2.png) | ![](img/ex6/postgres2.png) | ![](img/ex6/sqlite2.png) |
 | 3       | ![](./img/ex6/mysql3.png) | ![](img/ex6/postgres3.png) | ![](img/ex6/sqlite3.png) |
@@ -468,15 +488,19 @@ Baza: Northwind, tabela product_history
 
 Lekka modyfikacja poprzedniego zadania
 
-Napisz polecenie, które zwraca: id pozycji, id produktu, nazwę produktu, cenę produktu oraz:
-- średnią cenę produktów w kategorii do której należy dany produkt.
-- łączną wartość sprzedaży produktów danej kategorii (suma dla pola value)
-- średnią cenę danego produktu w roku którego dotyczy dana pozycja
-- łączną wartość sprzedaży produktów danej kategorii (suma dla pola value) (powtórzone???)
+Napisz polecenie, które zwraca:
 
+- id pozycji
+- id produktu
+- nazwę produktu
+- cenę produktu oraz:
+  - średnią cenę produktów w kategorii do której należy dany produkt.
+  - łączną wartość sprzedaży produktów danej kategorii (suma dla pola value)
+  - średnią cenę danego produktu w roku którego dotyczy dana pozycja
 
-Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. W przypadku funkcji
-   okna spróbuj użyć klauzuli WINDOW.
+Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porównaj zapytania. W przypadku funkcji okna spróbuj użyć klauzuli WINDOW.
+
+- Polecenie z wykorzystaniem podzapytania
 
 ```sql
 SELECT ph.id,
@@ -489,13 +513,56 @@ SELECT ph.id,
 FROM product_history AS ph
 ```
 
+- Polecenie z wykorzystaniem joina
+
+```sql
+SELECT
+    ph.id,
+    ph.ProductID,
+    ph.ProductName,
+    ph.UnitPrice,
+    AVG(ph2.unitprice) AS AveragePrice,
+    SUM(ph3.value) AS TotalSale,
+    AVG(ph4.unitprice) AS AveragePriceOverYear
+FROM
+    product_history AS ph
+JOIN
+    product_history AS ph2 ON ph.categoryid = ph2.categoryid
+JOIN
+    product_history AS ph3 ON ph.categoryid = ph3.categoryid
+JOIN
+    product_history AS ph4 ON ph.productid = ph4.productid AND YEAR(ph.date) = YEAR(ph4.date)
+GROUP BY
+    ph.id,
+    ph.ProductID,
+    ph.ProductName,
+    ph.UnitPrice;
+```
+
+- Polecenie z wykorzystaniem funkcji okna
+
+```sql
+SELECT ph.id,
+       ph.ProductID,
+       ph.ProductName,
+       ph.UnitPrice,
+       (select avg(ph.UnitPrice) over (partition by ph.categoryid)) as AveragePrice,
+       (select sum(ph.value) over (partition by ph.categoryid)) as TotalSale,
+       (select avg(ph.UnitPrice) over (partition by ph.productid, YEAR(ph.date))) as AveragePriceOverYear
+FROM product_history AS ph
+```
+
+Różnice w:
+
+- SQLite: należy zmienić `YEAR(ph.date)` na `strftime('%Y', ph.date)`
+- Postgres: należy zamienić `YEAR(ph.date)` na `EXTRACT (YEAR FROM ph.date)`
 
 Porównaj czasy oraz plany wykonania zapytań.
 
 Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
 | Zadanie | MySQL                     | Postgres                   | SQLite                   |
-|---------|---------------------------|----------------------------|--------------------------|
+| ------- | ------------------------- | -------------------------- | ------------------------ |
 | 1       | ![](./img/ex7/mysql1.png) | ![](img/ex7/postgres1.png) | ![](img/ex7/sqlite1.png) |
 | 2       | ![](./img/ex7/mysql2.png) | ![](img/ex7/postgres2.png) | ![](img/ex7/sqlite2.png) |
 
@@ -512,16 +579,22 @@ select productid,
        productname,
        unitprice,
        categoryid,
-       row_number() over(partition by categoryid order by unitprice desc) as rowno, rank() over(partition by categoryid order by unitprice desc) as rankprice, dense_rank() over(partition by categoryid order by unitprice desc) as denserankprice
+       row_number() over(partition by categoryid order by unitprice desc) as rowno,
+       rank() over(partition by categoryid order by unitprice desc) as rankprice,
+       dense_rank() over(partition by categoryid order by unitprice desc) as denserankprice
 from products;
 ```
+
+| MySQL                     |
+| ------------------------- |
+| ![](./img/ex8/mysql1.png) |
 
 **Zadanie**
 
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna
 
 ```sql
-SELECT 
+SELECT
     p1.productid,
     p1.productname,
     p1.unitprice,
@@ -580,9 +653,9 @@ WHERE pricerank <= 4
 ORDER BY year, productid, pricerank;
 ```
 
-| MySQL                     | 
-|---------------------------|
-| ![](./img/ex9/mysql1.png) | 
+| MySQL                     |
+| ------------------------- |
+| ![](./img/ex9/mysql1.png) |
 
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w
 różnych SZBD (MS SQL Server, PostgreSql, SQLite)
@@ -671,11 +744,8 @@ ORDER BY
 ```
 
 | MySQL                     | Postgres                   | SQLite                   |
-|---------------------------|----------------------------|--------------------------|
+| ------------------------- | -------------------------- | ------------------------ |
 | ![](./img/ex9/mysql2.png) | ![](img/ex9/postgres2.png) | ![](img/ex9/sqlite2.png) |
-
-
-
 
 ---
 
@@ -708,8 +778,8 @@ order by date;
 
 Funkcje lead i follow zwracają przesuniętą kolumnę. odpowiednio w dół lub w górę. tzn. użwając lag dostaniemy wartość która w wybranej kolumnie pojawiła się 1 rząd wyżej
 
-| MySQL                      | 
-|----------------------------|
+| MySQL                      |
+| -------------------------- |
 | ![](./img/ex10/mysql0.png) |
 
 **Zadanie**
@@ -720,16 +790,17 @@ różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 ```sql
 -- wyniki ...
 ```
+
 Wykonanie zapytania bez funkcji okna okazało się być zbyt trudne dlatego możemy dokonać porównania funkcji okna dla różnych SZBD
 
 SSMS nie zapełnia możliwości wykonania czytelnego zrzutu ekranu dla planu wykonania. Jest on jestnak sekwencyjny. Czas trwania jest niemal natychmiastowy
 
-dla postgres czas wykonania wyniósł ponad sekundę. Dodatkowu znowu należało zamienić `year (date)` na `extract ("YEAR" from date)` 
+dla postgres czas wykonania wyniósł ponad sekundę. Dodatkowu znowu należało zamienić `year (date)` na `extract ("YEAR" from date)`
 
 Sqlite zwrócił puste tabele pomimo użycia funkcji `strftime('%Y',date)` do wydobycia daty
 
 | MySQL                      | Postgres                    | SQLite                    |
-|----------------------------|-----------------------------|---------------------------|
+| -------------------------- | --------------------------- | ------------------------- |
 | ![](./img/ex10/mysql1.png) | ![](img/ex10/postgres1.png) | ![](img/ex10/sqlite1.png) |
 
 ---
@@ -750,7 +821,7 @@ Zbiór wynikowy powinien zawierać:
 - wartość poprzedniego zamówienia danego klienta.
 
 ```sql
-SELECT 
+SELECT
         c.CompanyName AS CustomerName,
         o.OrderID,
         o.OrderDate,
@@ -758,16 +829,16 @@ SELECT
         LAG(o.OrderID) OVER (PARTITION BY o.CustomerID ORDER BY o.OrderDate) AS PreviousOrderID,
         LAG(o.OrderDate) OVER (PARTITION BY o.CustomerID ORDER BY o.OrderDate) AS PreviousOrderDate,
         LAG(od.UnitPrice * od.Quantity + o.freight) OVER (PARTITION BY o.CustomerID ORDER BY o.OrderDate) AS PreviousOrderValue
-    FROM 
+    FROM
         Orders o
-    INNER JOIN 
+    INNER JOIN
         Customers c ON o.CustomerID = c.CustomerID
-    INNER JOIN 
+    INNER JOIN
         OrderDetails od ON o.OrderID = od.OrderID
 ```
 
 | MySQL                      |
-|----------------------------|
+| -------------------------- |
 | ![](./img/ex11/mysql1.png) |
 
 ---
@@ -846,12 +917,10 @@ Bez użycia funkcji okna możemy uzyskać wyniki których potrzebujemy.
 Wyniki i czasy
 
 | MySQL                      | Postgres                    | SQLite                    |
+| -------------------------- | --------------------------- | ------------------------- |
+| ![](./img/ex12/mysql1.png) | ![](img/ex12/postgres1.png) | ![](img/ex12/sqlite1.png) |
 |----------------------------|-----------------------------|---------------------------|
 | ![](./img/ex12/mysql2.png) | ![](img/ex12/postgres2.png) | ![](img/ex12/sqlite2.png) |
-
-Plany
-
-| MySQL                      | Postgres                    | SQLite                    |
 |----------------------------|-----------------------------|---------------------------|
 | ![](./img/ex12/mysql3.png) | ![](img/ex12/postgres3.png) | ![](img/ex12/sqlite3.png) |
 
@@ -870,16 +939,16 @@ Zbiór wynikowy powinien zawierać:
 - datę zamówienia,
 - wartość zamówienia (wraz z opłatą za przesyłkę),
 - dane zamówienia klienta o najniższej wartości w danym miesiącu
-    - nr zamówienia o najniższej wartości w danym miesiącu
-    - datę tego zamówienia
-    - wartość tego zamówienia
+  - nr zamówienia o najniższej wartości w danym miesiącu
+  - datę tego zamówienia
+  - wartość tego zamówienia
 - dane zamówienia klienta o najwyższej wartości w danym miesiącu
-    - nr zamówienia o najniższej wartości w danym miesiącu
-    - datę tego zamówienia
-    - wartość tego zamówienia
+  - nr zamówienia o najniższej wartości w danym miesiącu
+  - datę tego zamówienia
+  - wartość tego zamówienia
 
 ```sql
-SELECT 
+SELECT
     CustomerID,
     OrderID,
     OrderDate,
@@ -891,7 +960,7 @@ SELECT
     LAST_VALUE(OrderDate) OVER (PARTITION BY CustomerID, YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue DESC) AS HighestValueOrderDate,
     LAST_VALUE(TotalOrderValue) OVER (PARTITION BY CustomerID, YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue DESC) AS HighestValueOrderValue
 FROM (
-    SELECT 
+    SELECT
         Orders.CustomerID,
         Orders.OrderID,
         Orders.OrderDate,
@@ -902,9 +971,8 @@ FROM (
 ```
 
 | MySQL                      |
-|----------------------------|
+| -------------------------- |
 | ![](./img/ex13/mysql1.png) |
-
 
 ---
 
@@ -1021,14 +1089,57 @@ Jak widzimy plan wykonania dla mysql jest znacznie bardziej rozbudowany niż dla
 Wykonaj kilka "własnych" przykładowych analiz. Czy są jeszcze jakieś ciekawe/przydatne funkcje okna (z których nie
 korzystałeś w ćwiczeniu)? Spróbuj ich użyć w zaprezentowanych przykładach.
 
+`Funkcje agregujące + order by`
+
+Napisz polecenie które pokaże id produktu, nazwę produktu, cenę produktu, kategorię produktu, oraz maksymalną cenę produktu w danej kategori.
+
+Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna.
+
+Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite).
+
+- Polecenie z wykorzystaniem podzapytania
+
 ```sql
--- wyniki ...
+SELECT p.productid, p.productname, p.unitprice, p.categoryid,
+       (SELECT MAX(p2.unitprice) FROM products p2 WHERE p2.categoryid = p.categoryid) AS maxprice
+FROM products p
+ORDER BY p.categoryid, p.unitprice;
 ```
+
+- Polecenie z wykorzystaniem join
+
+```sql
+with max_price as (
+    select categoryid, max(unitprice) as MaxCategoryPrice
+    from products
+    group by categoryid
+)
+
+SELECT p.productid, p.productname, p.unitprice, p.categoryid, MaxCategoryPrice
+FROM products p
+         JOIN max_prices ON p.categoryid = max_price.categoryid
+ORDER BY p.categoryid, p.unitprice;
+```
+
+- Polecenie z wykorzystaniem funkcji okna
+
+```sql
+SELECT productid, productname, unitprice, categoryid,
+       max(unitprice) OVER (PARTITION BY categoryid) AS MaxCategoryPrice
+FROM products
+ORDER BY categoryid, unitprice;
+```
+
+| MySQL                      | Postgres                    | SQLite                    |
+| -------------------------- | --------------------------- | ------------------------- |
+| ![](./img/ex15/mysql1.png) | ![](img/ex15/postgres1.png) | ![](img/ex15/sqlite1.png) |
+| ![](./img/ex15/mysql2.png) | ![](img/ex15/postgres2.png) | ![](img/ex15/sqlite2.png) |
+| ![](./img/ex15/mysql3.png) | ![](img/ex15/postgres3.png) | ![](img/ex15/sqlite3.png) |
 
 Punktacja
 
 |         |     |
-|---------|-----|
+| ------- | --- |
 | zadanie | pkt |
 | 1       | 0,5 |
 | 2       | 0,5 |
