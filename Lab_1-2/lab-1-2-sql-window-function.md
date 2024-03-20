@@ -6,8 +6,8 @@
 
 **Imię i nazwisko:**
 
-- Szymon Budziak
-- Piotr Ludynia
+- **Szymon Budziak**
+- **Piotr Ludynia**
 
 ---
 
@@ -209,12 +209,12 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 **Porównanie planów wykonania**
 
 | Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
-|--------------|---------------------------|----------------------------|--------------------------|
+| ------------ | ------------------------- | -------------------------- | ------------------------ |
 | Podzapytanie | ![](./img/ex3/mysql1.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
 | Join         | ![](./img/ex3/mysql2.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
 | Funkcja okna | ![](./img/ex3/mysql3.png) | ![](img/ex3/postgres3.png) | ![](img/ex3/sqlite3.png) |
 
-Sqlite nie daje pełnej możliwości zwizualizowania planu. Datagrip pozwala jednak na zrobienie tego z Postgresem. 
+Sqlite nie daje pełnej możliwości zwizualizowania planu. Datagrip pozwala jednak na zrobienie tego z Postgresem.
 
 ---
 
@@ -471,11 +471,11 @@ WHERE UnitPrice > AveragePrice
 
 Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
-| Zadanie | MySQL                     | Postgres                   | SQLite                   |
-| ------- | ------------------------- | -------------------------- | ------------------------ |
-| 1       | ![](./img/ex6/mysql1.png) | ![](img/ex6/postgres1.png) | ![](img/ex6/sqlite1.png) |
-| 2       | ![](./img/ex6/mysql2.png) | ![](img/ex6/postgres2.png) | ![](img/ex6/sqlite2.png) |
-| 3       | ![](./img/ex6/mysql3.png) | ![](img/ex6/postgres3.png) | ![](img/ex6/sqlite3.png) |
+| Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
+| ------------ | ------------------------- | -------------------------- | ------------------------ |
+| Podzapytanie | ![](./img/ex6/mysql1.png) | ![](img/ex6/postgres1.png) | ![](img/ex6/sqlite1.png) |
+| Join         | ![](./img/ex6/mysql2.png) | ![](img/ex6/postgres2.png) | ![](img/ex6/sqlite2.png) |
+| Funkcja okna | ![](./img/ex6/mysql3.png) | ![](img/ex6/postgres3.png) | ![](img/ex6/sqlite3.png) |
 
 Możemy zaobserwować, że zapytanie z użyciem joina dla postgres nie wykonało się nawet po 8 minutach od wywołania.
 SSMS dla MySQL nie rozpoznaje nowo utworzonej tabeli, ale potrafi wykonać na niej zapytanie
@@ -561,10 +561,11 @@ Porównaj czasy oraz plany wykonania zapytań.
 
 Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
-| Zadanie | MySQL                     | Postgres                   | SQLite                   |
-| ------- | ------------------------- | -------------------------- | ------------------------ |
-| 1       | ![](./img/ex7/mysql1.png) | ![](img/ex7/postgres1.png) | ![](img/ex7/sqlite1.png) |
-| 2       | ![](./img/ex7/mysql2.png) | ![](img/ex7/postgres2.png) | ![](img/ex7/sqlite2.png) |
+| Zapytanie    | MySQL                     | Postgres                   | SQLite                   |
+| ------------ | ------------------------- | -------------------------- | ------------------------ |
+| Podzapytanie | ![](./img/ex7/mysql1.png) | ![](img/ex7/postgres1.png) | ![](img/ex7/sqlite1.png) |
+| Join         | ![](./img/ex7/mysql2.png) | ![](img/ex7/postgres2.png) | ![](img/ex7/sqlite2.png) |
+| Funkcja okna | ![](./img/ex7/mysql3.png) | ![](img/ex7/postgres3.png) | ![](img/ex7/sqlite3.png) |
 
 ---
 
@@ -589,8 +590,6 @@ from products;
 | ------------------------- |
 | ![](./img/ex8/mysql1.png) |
 
-**Zadanie**
-
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna
 
 ```sql
@@ -613,9 +612,9 @@ FROM
 ORDER BY p1.categoryid, rowno;
 ```
 
-| MySQL                     | 
-|---------------------------|
-| ![](./img/ex8/mysql1.png) | 
+| MySQL                     |
+| ------------------------- |
+| ![](./img/ex8/mysql1.png) |
 
 Widać zasadniczą różnicę działania dla kolumny `rowno`
 zwiększanie wartość musiałaby rosnąć dla zbioru produktów o tej samej cenie.
@@ -782,8 +781,6 @@ Funkcje lead i follow zwracają przesuniętą kolumnę. odpowiednio w dół lub 
 | -------------------------- |
 | ![](./img/ex10/mysql0.png) |
 
-**Zadanie**
-
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w
 różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
@@ -866,12 +863,10 @@ order by categoryid, unitprice desc;
 ```
 
 | SQLite                      |
-|-----------------------------|
+| --------------------------- |
 | ![](./img/ex12/sqlite1.png) |
 
 Funkcje first_value, oraz last_value zwracają odpowiednio pierwszy i ostatni element w danej partycji/grupie, a przynajmniej powinny. Okzuje się, że last_value nie działa tak jak powinno. Wygląda na to, że działa błędnie.
-
-**Zadanie**
 
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w
 różnych SZBD (MS SQL Server, PostgreSql, SQLite)
@@ -881,12 +876,12 @@ SELECT p.productid,
        p.productname,
        p.unitprice,
        p.categoryid,
-       (SELECT top 1 productname 
-        FROM products 
-        WHERE categoryid = p.categoryid 
+       (SELECT top 1 productname
+        FROM products
+        WHERE categoryid = p.categoryid
         ORDER BY unitprice DESC) AS first,
-       (SELECT top 1 productname 
-        FROM products 
+       (SELECT top 1 productname
+        FROM products
         WHERE categoryid = p.categoryid and unitprice = p.unitprice
         ORDER BY unitprice ASC) as last
 FROM products p
@@ -919,9 +914,7 @@ Wyniki i czasy
 | MySQL                      | Postgres                    | SQLite                    |
 | -------------------------- | --------------------------- | ------------------------- |
 | ![](./img/ex12/mysql1.png) | ![](img/ex12/postgres1.png) | ![](img/ex12/sqlite1.png) |
-|----------------------------|-----------------------------|---------------------------|
 | ![](./img/ex12/mysql2.png) | ![](img/ex12/postgres2.png) | ![](img/ex12/sqlite2.png) |
-|----------------------------|-----------------------------|---------------------------|
 | ![](./img/ex12/mysql3.png) | ![](img/ex12/postgres3.png) | ![](img/ex12/sqlite3.png) |
 
 ---
@@ -992,7 +985,7 @@ Zbiór wynikowy powinien zawierać:
 - wartość sprzedaży produktu narastające od początku miesiąca
 
 ```sql
-SELECT 
+SELECT
     id,
     productid,
     date,
@@ -1010,18 +1003,18 @@ Spróbuj wykonać zadanie bez użycia funkcji okna. Spróbuj uzyskać ten sam wy
 czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
 ```sql
-SELECT 
+SELECT
     ph.id,
     ph.productid,
     ph.date,
     ph.value,
-    (SELECT SUM(ph_inner.value) 
+    (SELECT SUM(ph_inner.value)
      FROM product_history ph_inner
-     WHERE ph_inner.productid = ph.productid 
-     AND YEAR(ph_inner.date) = YEAR(ph.date) 
-     AND MONTH(ph_inner.date) = MONTH(ph.date) 
+     WHERE ph_inner.productid = ph.productid
+     AND YEAR(ph_inner.date) = YEAR(ph.date)
+     AND MONTH(ph_inner.date) = MONTH(ph.date)
      AND ph_inner.date <= ph.date) AS cumulative_value
-FROM 
+FROM
     product_history ph
 ORDER BY
     ph.productid,
@@ -1031,19 +1024,20 @@ ORDER BY
 ```
 
 wersja dla Postgres
+
 ```sql
-SELECT 
+SELECT
     ph.id,
     ph.productid,
     ph.date,
     ph.value,
-    (SELECT SUM(ph_inner.value) 
+    (SELECT SUM(ph_inner.value)
      FROM product_history ph_inner
-     WHERE ph_inner.productid = ph.productid 
+     WHERE ph_inner.productid = ph.productid
      AND extract (year from ph_inner.date) = extract (year from ph.date)
      AND extract (month from ph_inner.date) = extract (month from ph.date)
      AND ph_inner.date <= ph.date) AS cumulative_value
-FROM 
+FROM
     product_history ph
 ORDER BY
     ph.productid,
@@ -1052,7 +1046,8 @@ ORDER BY
     ph.date;
 ```
 
-Wersja dla SQLite 
+Wersja dla SQLite
+
 ```sql
 SELECT
     ph.id,
@@ -1077,7 +1072,7 @@ ORDER BY
 Dla żadnego SZBD zapytanie nie skończyło się w rozsądnym czasie więc przedstawiy analizę planu wykonania
 
 | MySQL                      | Postgres                    | SQLite                    |
-|----------------------------|-----------------------------|---------------------------|
+| -------------------------- | --------------------------- | ------------------------- |
 | ![](./img/ex14/mysql1.png) | ![](img/ex14/postgres1.png) | ![](img/ex14/sqlite1.png) |
 
 Jak widzimy plan wykonania dla mysql jest znacznie bardziej rozbudowany niż dla sqlite i postgres
@@ -1130,11 +1125,11 @@ FROM products
 ORDER BY categoryid, unitprice;
 ```
 
-| MySQL                      | Postgres                    | SQLite                    |
-| -------------------------- | --------------------------- | ------------------------- |
-| ![](./img/ex15/mysql1.png) | ![](img/ex15/postgres1.png) | ![](img/ex15/sqlite1.png) |
-| ![](./img/ex15/mysql2.png) | ![](img/ex15/postgres2.png) | ![](img/ex15/sqlite2.png) |
-| ![](./img/ex15/mysql3.png) | ![](img/ex15/postgres3.png) | ![](img/ex15/sqlite3.png) |
+| Zapytanie    | MySQL                      | Postgres                    | SQLite                    |
+| ------------ | -------------------------- | --------------------------- | ------------------------- |
+| Podzapytanie | ![](./img/ex15/mysql1.png) | ![](img/ex15/postgres1.png) | ![](img/ex15/sqlite1.png) |
+| Join         | ![](./img/ex15/mysql2.png) | ![](img/ex15/postgres2.png) | ![](img/ex15/sqlite2.png) |
+| Funkcja okna | ![](./img/ex15/mysql3.png) | ![](img/ex15/postgres3.png) | ![](img/ex15/sqlite3.png) |
 
 Punktacja
 
