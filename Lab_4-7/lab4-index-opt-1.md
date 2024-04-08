@@ -217,11 +217,7 @@ Sprawdź zakładkę **Tuning Options**, co tam można skonfigurować?
 
 ## ![](img/ex2/1.png)
 
-> Wyniki:
-
-```sql
---  ...
-```
+> Wyniki: W zakładce tuning options możemy ustawić struktury PDS, strategię partycji i te struktury PDS któe mają być zachowane. Struktury fizyczne które są dostępne, to indeksy, ich widoki, indeksy bezklastrowe, filtrowane oraz typu columnstore.
 
 ---
 
@@ -320,7 +316,7 @@ Opisz, dlaczego dane indeksy zostały zaproponowane do zapytań:
 
 ---
 
-> Wyniki:
+> Wyniki: Indeksy zostały zaproponowane by zoptymalizować czas wykonywania zapytań. Użycie indeksu pozwala na ograniczenie liczby operacji do wykonania przy przeszukiwaniu danych w tabelach.
 
 ```sql
 --  ...
