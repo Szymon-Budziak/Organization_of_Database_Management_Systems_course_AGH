@@ -251,61 +251,112 @@ Zaproponowany przez SSMS skrypt wygląda następująco
 use [xyz]
 go
 
+
+
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K1_2_3_4_5_6_7_8_9_10_11] ON [dbo].[salesorderdetail]
-(
-	[SalesOrderID] ASC
-)
-INCLUDE([SalesOrderDetailID],[CarrierTrackingNumber],[OrderQty],[ProductID],[SpecialOfferID],[UnitPrice],[UnitPriceDiscount],[LineTotal],[rowguid],[ModifiedDate]) WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+([SalesOrderID] ASC)
+INCLUDE(
+       [SalesOrderDetailID],
+       [CarrierTrackingNumber],
+       [OrderQty],
+       [ProductID],
+       [SpecialOfferID],
+       [UnitPrice],
+       [UnitPriceDiscount],
+       [LineTotal],
+       [rowguid],
+       [ModifiedDate]) 
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
 go
+
+
 
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K5_1_4_8_9] ON [dbo].[salesorderdetail]
-(
-	[ProductID] ASC
-)
-INCLUDE([SalesOrderID],[OrderQty],[UnitPriceDiscount],[LineTotal]) WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+([ProductID] ASC)
+INCLUDE(
+       [SalesOrderID],
+       [OrderQty],
+       [UnitPriceDiscount],
+       [LineTotal]) 
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
 go
+
+
 
 SET ANSI_PADDING ON
-
 go
+
+
 
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K3_K1] ON [dbo].[salesorderdetail]
-(
-	[CarrierTrackingNumber] ASC,
-	[SalesOrderID] ASC
-)WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+([CarrierTrackingNumber] ASC, [SalesOrderID] ASC)
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
 go
+
+
 
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K1] ON [dbo].[salesorderdetail]
-(
-	[SalesOrderID] ASC
-)WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+([SalesOrderID] ASC)
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
 go
 
-CREATE STATISTICS [_dta_stat_917578307_1_5] ON [dbo].[salesorderdetail]([SalesOrderID], [ProductID])
+
+
+CREATE STATISTICS [_dta_stat_917578307_1_5] 
+ON [dbo].[salesorderdetail]([SalesOrderID], [ProductID])
 WITH AUTO_DROP = OFF
 go
 
+
+
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderheader_8_901578250__K3_K1_2_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21_22_23_24_25_26] ON [dbo].[salesorderheader]
-(
-	[OrderDate] ASC,
-	[SalesOrderID] ASC
-)
-INCLUDE([RevisionNumber],[DueDate],[ShipDate],[Status],[OnlineOrderFlag],[SalesOrderNumber],[PurchaseOrderNumber],[AccountNumber],[CustomerID],[SalesPersonID],[TerritoryID],[BillToAddressID],[ShipToAddressID],[ShipMethodID],[CreditCardID],[CreditCardApprovalCode],[CurrencyRateID],[SubTotal],[TaxAmt],[Freight],[TotalDue],[Comment],[rowguid],[ModifiedDate]) WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+([OrderDate] ASC,[SalesOrderID] ASC)
+INCLUDE(
+       [RevisionNumber],
+       [DueDate],
+       [ShipDate],
+       [Status],
+       [OnlineOrderFlag],
+       [SalesOrderNumber],
+       [PurchaseOrderNumber],
+       [AccountNumber],
+       [CustomerID],
+       [SalesPersonID],
+       [TerritoryID],
+       [BillToAddressID],
+       [ShipToAddressID],
+       [ShipMethodID],
+       [CreditCardID],
+       [CreditCardApprovalCode],
+       [CurrencyRateID],
+       [SubTotal],
+       [TaxAmt],
+       [Freight],
+       [TotalDue],
+       [Comment],
+       [rowguid],
+       [ModifiedDate]) 
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
 go
 
+       
+       
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderheader_8_901578250__K1_4_5_8_9] ON [dbo].[salesorderheader]
-(
-	[SalesOrderID] ASC
-)
-INCLUDE([DueDate],[ShipDate],[SalesOrderNumber],[PurchaseOrderNumber]) WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+([SalesOrderID] ASC)
+INCLUDE(
+       [DueDate],
+       [ShipDate],
+       [SalesOrderNumber],
+       [PurchaseOrderNumber]
+       ) 
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
 go
 
+       
+       
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderheader_8_901578250__K1_K3] ON [dbo].[salesorderheader]
-(
-	[SalesOrderID] ASC,
-	[OrderDate] ASC
-)WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+([SalesOrderID] ASC,[OrderDate] ASC)
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
 go
 
 ```
@@ -318,8 +369,107 @@ Opisz, dlaczego dane indeksy zostały zaproponowane do zapytań:
 
 > Wyniki: Indeksy zostały zaproponowane by zoptymalizować czas wykonywania zapytań. Użycie indeksu pozwala na ograniczenie liczby operacji do wykonania przy przeszukiwaniu danych w tabelach.
 
+> Na tabeli salesorderdetail tworzone są 4 indeksy: Dwa pierwsze z nich mapują ID odpowiednio sprzedaży oraz produktu na kolumny z tabeli. Pozwala to na szybkie wydobycie wartości tych kolumn na podstawie wartości ID
+> Kolejny indeks sortuje wartości ID sprzedaży oraz numeru przewozowego. Pozwala to na szybkie otrzymanie uszeregowanych wartości i tym samym łatwe zdobywanie informacji o poszczególnych dostawach.
 ```sql
---  ...
+CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K1_2_3_4_5_6_7_8_9_10_11] ON [dbo].[salesorderdetail]
+([SalesOrderID] ASC)
+INCLUDE(
+       [SalesOrderDetailID],
+       [CarrierTrackingNumber],
+       [OrderQty],
+       [ProductID],
+       [SpecialOfferID],
+       [UnitPrice],
+       [UnitPriceDiscount],
+       [LineTotal],
+       [rowguid],
+       [ModifiedDate]) 
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+go
+
+
+
+CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K5_1_4_8_9] ON [dbo].[salesorderdetail]
+([ProductID] ASC)
+INCLUDE(
+       [SalesOrderID],
+       [OrderQty],
+       [UnitPriceDiscount],
+       [LineTotal]) 
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+go
+
+
+
+CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K3_K1] ON [dbo].[salesorderdetail]
+([CarrierTrackingNumber] ASC, [SalesOrderID] ASC)
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+go
+
+
+
+CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K1] ON [dbo].[salesorderdetail]
+([SalesOrderID] ASC)
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+go
+```
+
+> Pozostałe trzy indeksy są tworzone dla salesorderheader. Podobnie jak w poprzednim przypadku tworzymy mapowanie sortowanej daty i ID zamówienia do pozostałych kolumn.
+> Tworzony jest też indeks mapujący ID zamówienia na 4 kolumny osobno. Zawierają one pozostałe informacje o datach istotnych dla zamówienia oraz numery sprzedaży i kupna.
+> OStatni indeks to sortowane ID sprzedaży oraz data zamówienia. 
+> Te trzy indeksy optymalizują zapytania uwzględniające tabelę salesorderheader
+
+```sql
+CREATE NONCLUSTERED INDEX [_dta_index_salesorderheader_8_901578250__K3_K1_2_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21_22_23_24_25_26] ON [dbo].[salesorderheader]
+([OrderDate] ASC,[SalesOrderID] ASC)
+INCLUDE(
+       [RevisionNumber],
+       [DueDate],
+       [ShipDate],
+       [Status],
+       [OnlineOrderFlag],
+       [SalesOrderNumber],
+       [PurchaseOrderNumber],
+       [AccountNumber],
+       [CustomerID],
+       [SalesPersonID],
+       [TerritoryID],
+       [BillToAddressID],
+       [ShipToAddressID],
+       [ShipMethodID],
+       [CreditCardID],
+       [CreditCardApprovalCode],
+       [CurrencyRateID],
+       [SubTotal],
+       [TaxAmt],
+       [Freight],
+       [TotalDue],
+       [Comment],
+       [rowguid],
+       [ModifiedDate]) 
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+go
+
+       
+       
+CREATE NONCLUSTERED INDEX [_dta_index_salesorderheader_8_901578250__K1_4_5_8_9] ON [dbo].[salesorderheader]
+([SalesOrderID] ASC)
+INCLUDE(
+       [DueDate],
+       [ShipDate],
+       [SalesOrderNumber],
+       [PurchaseOrderNumber]
+       ) 
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+go
+
+       
+       
+CREATE NONCLUSTERED INDEX [_dta_index_salesorderheader_8_901578250__K1_K3] ON [dbo].[salesorderheader]
+([SalesOrderID] ASC,[OrderDate] ASC)
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+go
 ```
 
 ---
@@ -329,6 +479,12 @@ Sprawdź jak zmieniły się Execution Plany. Opisz zmiany:
 ---
 
 ### Zapytanie 1.
+
+Stary plan:
+
+![](img/ex1/query1-2.png)
+
+Nowe plany:
 
 ![](img/ex2/6.png)
 
@@ -386,7 +542,7 @@ from sys.dm_db_index_physical_stats (db_id('adventureworks2017')
 ,'detailed') -- we want all information
 ```
 
-![](img/ex3/1.png)
+
 
 ![](img/ex3/2.png)
 
@@ -396,11 +552,10 @@ Jakie są według Ciebie najważniejsze pola?
 
 ---
 
-> Wyniki:
-
-```sql
---  ...
-```
+> Pola które dają najwięcej informacji o indeksach to zdecydowanie avg_page_Space_used_in_percent, record_count oraz avg_record_size_in_bytes
+> avg_page_space_used_in_percent określa efektywność zaalokowanej pamięci
+> avg_fragmentation_in_percent oznacza jak bardzo fragmentowane są dane. Im bardziej tym gorzej. Fizyczna tabela ciągła jest optymalna
+> Dodatkowo index_type_desc opisuje rodzaj indeksu co również jest istotną informacją
 
 ---
 
@@ -426,10 +581,15 @@ and index_id not in (0) --only clustered and nonclustered indexes
 
 ---
 
-> Wyniki:
+> Wyniki: Niektóre tabele trzeba zoptymalizować. Kryteria zmiany to indeksy o fragmentacji pomiędzy 10 a 15 %, 
+> średnie wykorzystanie strony między 60 a 75%, dla indeksów o więcej niż 8 stronach.
+> Jeśli indeksy spełniają te warunki to są odfiltrowane i zwrócone. Oznacza to, że właśnie te indeksy chcemy zmodyfikować 
+
 > zrzut ekranu/komentarz:
 
 ![](img/ex3/4.png)
+
+> Jak widzimy jedynie 5 indeksów wmaga reorganizacji
 
 ---
 
@@ -453,10 +613,14 @@ and index_id not in (0) --only clustered and nonclustered indexes
 
 ---
 
-> Wyniki:
+> Wyniki: Wcześniej odfiltrowaliśmy indeksy które warto przebudować. Teraz znajdujemy indeksy najgorsze. Te które koniecznie należy przebudować
+> Tak jak poprzednio patrzymy tylko na indeksy o więcej niż 8 stronach. Tym razem wybieramy te indeksy których fragmentacja przekracza 15% albo wykorzystanie strony jest mniejsze niż 60%
+
 > zrzut ekranu/komentarz:
 
 ## ![](img/ex3/5.png)
+
+> Jedyne indeksy wymagające przebudowy działają na tabeli Person. ich ID to 256002, 256003, 256004
 
 Czym się różni przebudowa indeksu od reorganizacji?
 
@@ -464,11 +628,7 @@ Czym się różni przebudowa indeksu od reorganizacji?
 
 ---
 
-> Wyniki:
-
-```sql
---  ...
-```
+> Wyniki: Reorganizacja przeprowadza fragmentację indeksu w miejscu. Działa na istniejącej strukturze. Przebudowa usuwa indeks i buduje go od zera.
 
 ---
 
@@ -476,13 +636,9 @@ Sprawdź co przechowuje tabela `sys.dm_db_index_usage_stats`:
 
 ---
 
-> Wyniki:
+> Wyniki: Tabela zawiera historię użycia indeksów. Możemy sprawdzić jak często używane są indeksy i jak są przydatne. Może być tak, że będzie stworzony niepotrzebny indeks. W takim przypakdu nie będzie on pewnie używany. Dowiemy się o tym z tej tabeli.
 
 ![](img/ex3/6.png)
-
-```sql
---  ...
-```
 
 ---
 
@@ -521,22 +677,32 @@ on sc.schema_id = ob.schema_id
 
 ![](img/ex3/7.png)
 
-Napisz przygotowane komendy SQL do naprawy indeksów: ???????
+Napisz przygotowane komendy SQL do naprawy indeksów:
+
 
 ---
 
-> Wyniki:
+> Wyniki: 
 
 ```sql
+--reorganize
+alter index PK_JobCandidate_JobCandidateID on HumanResources.JobCandidate reorganize
+
+alter index PK_ProductModel_ProductModelID on Production.ProductModel reorganize
+
+alter index PK_BillOfMaterials_BillOfMaterialsID on Production.BillOfMaterials reorganize
+
+alter index IX_WorkOrder_ProductID on Production.WorkOrder reorganize
+
+alter index IX_WorkOrderRouting_ProductID on Production.WorkOrderRouting reorganize
+
+--rebuild
 alter index XMLPATH_Person_Demographics on Person.Person rebuild;
 
 alter index XMLPROPERTY_Person_Demographics on Person.Person rebuild;
 
 alter index XMLVALUE_Person_Demographics on Person.Person rebuild;
-```
 
-```sql
---  ...
 ```
 
 ---
@@ -566,11 +732,7 @@ Zapisz sobie kilka różnych typów stron, dla różnych indeksów:
 
 ---
 
-> Wyniki:
-
-```sql
---  ...
-```
+> Wyniki: Zapisaliśmy 3 strony: 13720, 11728, 12134. Widoczne w dalszej części
 
 ---
 
@@ -592,7 +754,7 @@ Zapisz obserwacje ze stron. Co ciekawego udało się zaobserwować?
 
 > Wyniki:
 
-- Dal strony `13720`
+- Dla strony `13720`
 
 ![](img/ex4/2.png)
 
@@ -602,7 +764,7 @@ Zapisz obserwacje ze stron. Co ciekawego udało się zaobserwować?
 
 ```
 
-- Dal strony `11728`
+- Dla strony `11728`
 
 ![](img/ex4/4.png)
 
