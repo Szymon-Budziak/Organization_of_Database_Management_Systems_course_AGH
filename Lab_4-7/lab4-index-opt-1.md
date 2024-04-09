@@ -150,18 +150,6 @@ możemy zbudować plan wykonania zapytania.
 
 ![](img/ex1/query1-1.png)
 
-Równoważny wynik możemy uzyskać używając zapytania następującej postaci
-
-```sql
-select sh.*, sd.*
-from  salesorderdetail sd
-inner join salesorderheader sh  on sh.salesorderid = sd.salesorderid
-where orderdate = '2008-06-01 00:00:00.000'
-go
-```
-
-Jednak plany wykonania obu zapytań również są równoważne więc nie uzyskujemy optymalizacji.
-
 ![](img/ex1/query1-2.png)
 
 ### Zapytanie 2.
@@ -169,9 +157,13 @@ Jednak plany wykonania obu zapytań również są równoważne więc nie uzyskuj
 Zapytanie drugie wydobywa datę zamówienia, id produktu, liczbę zamówionych produktów,zniżkę i zsumowaną wartość linetotal.
 Zapytanie jest obsłużone z joinem który łączy je tabelą salesorderdetail by pogrupować zamówienia według daty oraz id produktu, a także by dostarczyć informacji o liczbie zamówionych jednostek.
 
-![](img/ex1/query2-1.png)
+![](img/ex1/query2-result.png)
+
+Wykonuje się ono 30 sekund
 
 Plan wykonania zapytania:
+
+![](img/ex1/query2-1.png)
 
 ![](img/ex1/query2-2.png)
 
@@ -184,24 +176,23 @@ Ma bardzo prosty plan wykonania:
 
 ![](img/ex1/query3-1.png)
 
-Po wykomentowaniu filtracji przez datę plan zmienia się jedynie nieznacznie.
-
 ![](img/ex1/query3-2.png)
-
-Otrzymujemy natomiast wyniki. Zawierają one kolumny numeru sprzedaży oraz zakupu a także wymaganą i faktyczną datę dostarczenia.
-
-![](img/ex1/query3-3.png)
 
 ### Zapytanie 4.
 
 Zapytanie 4 jest podobne do 3. Różnice między nimi są takie, że 4 nie filtruje daty, a zamist tego wświetla rekordy które odpowiadają numerom śledzenia (carriertrackingnumber).
 Kolejną różnicą jest sortowanie po nowym, pierwszym wierszu tabeli czyli id zamówienia.
 
-![](img/ex1/query4-1.png)
+![](img/ex1/query4-result.png)
 
 Plan wykonania zapytania wygląda następująco
 
+![](img/ex1/query4-1.png)
+
 ![](img/ex1/query4-2.png)
+
+> SSMS sam sugeruje dodanie indeksów nieklastrowych. Plany zapytań wyglądają czasochłonnie i można by je w ten 
+> sposób zoptymalizować
 
 ---
 
@@ -482,39 +473,71 @@ Sprawdź jak zmieniły się Execution Plany. Opisz zmiany:
 
 ### Zapytanie 1.
 
-Stary plan:
+Stare plany:
+
+![](img/ex1/query1-1.png)
 
 ![](img/ex1/query1-2.png)
 
 Nowe plany:
 
-![](img/ex2/6.png)
+![](img/ex2/query1-1.png)
 
-![](img/ex2/7.png)
+![](img/ex2/query1-2.png)
+
+> cały koszt wykonania jest teraz rozłożony pomiędzy wyszukiwaniem w dwóch undeksach a zamaist hash match-owania 
+> inner join jest przeprowadzany przy pomocy zagnieżdżonych pętli.
+> Uzyskujemy potencjalną optymalizację. Index Seek sprawdza jedynie 4 elementy
 
 ### Zapytanie 2.
 
-![](img/ex2/8.png)
+Stare plany:
 
-![](img/ex2/9.png)
+![](img/ex1/query2-1.png)
+
+![](img/ex1/query2-2.png)
+
+Nowe plany:
+
+![](img/ex2/query2-1.png)
+
+![](img/ex2/query2-2.png)
+
+> Jedyna zasadnicza zmiana to skan indeksu zamiast skanu tabel. Działanie joinów pozostaje takie samo.
 
 ### Zapytanie 3.
 
-![](img/ex2/10.png)
+Stare plany:
 
-![](img/ex2/11.png)
+![](img/ex1/query3-1.png)
+
+![](img/ex1/query3-2.png)
+
+Nowe plany:
+
+![](img/ex2/query3-1.png)
+
+![](img/ex2/query3-2.png)
+
+> W tym przykładzie join jest obsługiwany poprzez zagnieżdżone pętle a odczyty z tabeli poprzez Index Seek. 
+> Wyszukiwanie, nie skanowanie jak w poprzednich przypadkach.
 
 ### Zapytanie 4.
 
-![](img/ex2/12.png)
+Stare plany:
 
-![](img/ex2/13.png)
+![](img/ex1/query4-1.png)
 
-> Wyniki:
+![](img/ex1/query4-2.png)
 
-```sql
---  ...
-```
+Nowe plany:
+
+![](img/ex2/query4-1.png)
+
+![](img/ex2/query4-2.png)
+
+> W ostatnim przykładzie sortowanie jest przeprowadzane przed join-em a skan tabel jest zamieniony na wyszukiwanie indeksowe. 
+> Dodatkowo join jest obsłużony przez zagnieżdżone pętle
 
 ---
 
