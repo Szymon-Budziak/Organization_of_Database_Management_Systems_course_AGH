@@ -145,7 +145,8 @@ Teraz wykonaj poszczególne zapytania (najlepiej każde analizuj oddzielnie). Co
 
 ### Zapytanie 1.
 
-Zapytanie 1 nie zwraca żadnych wyników jednak po zakomentowaniu filtracji przez datę możemy zobaczyć wyniki.
+Zapytanie 1 nie zwraca żadnych wyników przez filtrację po dacie. Żaden rekord nie odpowiada kryteriom ale dalej 
+możemy zbudować plan wykonania zapytania.
 
 ![](img/ex1/query1-1.png)
 
@@ -155,7 +156,7 @@ Równoważny wynik możemy uzyskać używając zapytania następującej postaci
 select sh.*, sd.*
 from  salesorderdetail sd
 inner join salesorderheader sh  on sh.salesorderid = sd.salesorderid
--- where orderdate = '2008-06-01 00:00:00.000'
+where orderdate = '2008-06-01 00:00:00.000'
 go
 ```
 
@@ -176,7 +177,8 @@ Plan wykonania zapytania:
 
 ### Zapytanie 3.
 
-Kolejne zapytanie również filtruje datę tak, że w wyniku nie dostajemy żadnych rekordów.
+Kolejne zapytanie również filtruje datę tak, że w wyniku nie dostajemy żadnych rekordów. Podobnie do zapytania 
+pierwszego.
 
 Ma bardzo prosty plan wykonania:
 
@@ -732,7 +734,7 @@ Zapisz sobie kilka różnych typów stron, dla różnych indeksów:
 
 ---
 
-> Wyniki: Zapisaliśmy 3 strony: 13720, 11728, 12134. Widoczne w dalszej części
+> Wyniki: Zapisaliśmy 3 strony: 13720, 12272, 8089. Widoczne w dalszej części
 
 ---
 
@@ -754,17 +756,14 @@ Zapisz obserwacje ze stron. Co ciekawego udało się zaobserwować?
 
 > Wyniki:
 
-- Dla strony `13720`
+- Dla strony `13720` dostaliśmy wyłącznie wynik "Messages". Wygląda on następująco
 
 ![](img/ex4/2.png)
 
 ![](img/ex4/3.png)
 
-```sql
 
-```
-
-- Dla strony `11728`
+- Wykonując komendę sql dla strony `12272` Dostaliśmy dodatkowo tabelę!
 
 ![](img/ex4/4.png)
 
@@ -774,15 +773,12 @@ Zapisz obserwacje ze stron. Co ciekawego udało się zaobserwować?
 
 ```
 
-- Dla strony `12134`
+- Dla strony `8089` dostajemy dużo mniej obszerną informację niż dla 13720. Brakuje na przykład 
+  wypisywanych informacji o slotach
 
 ![](img/ex4/6.png)
 
-![](img/ex4/7.png)
-
-```sql
-
-```
+> Informacje stron ewidentnie różnią się w zależności od typu.
 
 ---
 
