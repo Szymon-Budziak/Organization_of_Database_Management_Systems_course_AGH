@@ -237,9 +237,37 @@ Co można o nich powiedzieć?
 ---
 > Wyniki: 
 
-```sql
---  ...
-```
+Zapytanie 1.
+
+*Statystyki*
+
+![](img/ex2/query1-1.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query1-2.png)
+
+Zapytanie 2.
+
+*Statystyki*
+
+![](img/ex2/query2-1.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query2-2.png)
+
+Zapytanie 3.
+
+*Statystyki*
+
+![](img/ex2/query3-1.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query3-2.png)
+
+> Wszystkie 3 zapytania to proste skany tabel. z Jesteśmy w stanie z nich wywnioskować, że jest w tabeli 14 osób z imieniem którego szukamy, 2 z tym nazwiskiem, ale odkładnie jedna z takim imieniem i nazwiskiem.
 
 Przygotuj indeks obejmujący te zapytania:
 
@@ -250,13 +278,40 @@ on person(lastname, firstname)
 
 Sprawdź plan zapytania. Co się zmieniło?
 
-
 ---
 > Wyniki: 
 
-```sql
---  ...
-```
+Zapytanie 1.
+
+*Statystyki*
+
+![](img/ex2/query1-3.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query1-4.png)
+
+Zapytanie 2.
+
+*Statystyki*
+
+![](img/ex2/query2-3.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query2-4.png)
+
+Zapytanie 3.
+
+*Statystyki*
+
+![](img/ex2/query3-3.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query3-4.png)
+
+> Operacja wyszukania w tabeli została rozłożona na zagnieżdżony join, skan indeksu i RID lookup. Możemy zauważyć, że w zapytaniu 2, po 50% kosztu jest rozdzielone na RID lookup i wyszukiwanie w indeksie. Dla zapytania pierwszego większość kosztu siedzi w RID lookup, a dla trzeciego w skanie indeksu. Dodatkowo zagnieżdżone pętle biorą na siebie część kosztu z w zapytaniu 3. 
 
 
 Przeprowadź ponownie analizę zapytań tym razem dla parametrów: `FirstName = ‘Angela’` `LastName = ‘Price’`. (Trzy zapytania, różna kombinacja parametrów). 
@@ -267,9 +322,37 @@ Czym różni się ten plan od zapytania o `'Osarumwense Agbonile'` . Dlaczego ta
 ---
 > Wyniki: 
 
-```sql
---  ...
-```
+Zapytanie 1.
+
+*Statystyki*
+
+![](img/ex2/query1-5.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query1-6.png)
+
+Zapytanie 2.
+
+*Statystyki*
+
+![](img/ex2/query2-5.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query2-6.png)
+
+Zapytanie 3.
+
+*Statystyki*
+
+![](img/ex2/query3-5.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex2/query3-6.png)
+
+> Dla zapytania 1 i 3 (o samo nazwisko i samo imię) nie użyto indeksu. Stało się tak zapewne przez to, że indeks został utworzony dla party (imię,nazwisko). W poprzednim przykładzie z `'Osarumwense Agbonile'`, nazwisko to było jedynym wpisem w tabeli o takim imieniu a także jedynym o takim nazwisku przez to SZBD mógł użyć indeksu. W bazie jest jednak więcej niż jedna osoba z nazwiskiem Price i więcej niż jedna z imieniem Angela. By je wyszukać system używa zwykłego skanu tabeli. 
 
 
 # Zadanie 3
