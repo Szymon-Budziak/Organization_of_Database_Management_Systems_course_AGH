@@ -100,11 +100,23 @@ Zanotuj czas zapytania oraz jego koszt koszt:
 
 Zapytanie 1.
 
-![](img/ex1/query1-1.png) ![](img/ex1/query1-2.png)
+*Statystyki*
+
+![](img/ex1/query1-1.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex1/query1-2.png)
 
 Zapytanie 2.
 
-![](img/ex1/query2-1.png) ![](img/ex1/query2-2.png)
+*Statystyki*
+
+![](img/ex1/query2-1.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex1/query2-2.png)
 
 > Widzimy, że całość kosztu znajduje się w skanie tabeli. Zapytanie 2 wykonuje się w podobnym czasie ponieważ skanowana jest cała tabela.
 
@@ -122,13 +134,25 @@ Jak zmienił się plan i czas? Czy jest możliwość optymalizacji?
 
 Zapytanie 1.
 
-![](img/ex1/query1-3.png) ![](img/ex1/query1-4.png)
+*Statystyki*
+
+![](img/ex1/query1-3.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex1/query1-4.png)
 
 > Czas wykonania rozłożył się na RDI lookup i przeszukanie indeksu. koszt tych operacji to po 50% kosztu całości zapytania. Sumaryczny czas nieznacznie się zwiększył! Większość czasu to operacje zagnieżdżonej pętli. Nie uzyskujemy optymalizacji dla tego zapytania.
 
 Zapytanie 2.
 
-![](img/ex1/query2-3.png) ![](img/ex1/query2-4.png)
+*Statystyki*
+
+![](img/ex1/query2-3.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex1/query2-4.png)
 
 > Większość czasu wykonania jest wykonana w zagnieżdżonej pętli. Sam czas wykonania zmniejszył się. Uzyskaliśmy w ten sposób pewną optymalizację zapytania. 93% kosztu zapytania to RID lookup a reszta na wyszukanie w indeksie.
 
@@ -153,11 +177,23 @@ create clustered index customer_store_cls_idx on customer(storeid)
 
 Zapytanie 1.
 
-![](img/ex1/query1-5.png) ![](img/ex1/query1-6.png)
+*Statystyki*
+
+![](img/ex1/query1-5.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex1/query1-6.png)
 
 Zapytanie 2.
 
-![](img/ex1/query2-5.png) ![](img/ex1/query2-6.png)
+*Statystyki*
+
+![](img/ex1/query2-5.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex1/query2-6.png)
 
 > Dla obu indeksów czas wyszukiwania jest niemal zerowy. Plan wykonania znacznie się upraszcza i uzyskujemy optymalizację. Jest to prostszy sposób wybierania krotki. Indeks klastrowy jest trzymany razem z danymi, a bezklastrowy jest tworzony jako osobny.
 
