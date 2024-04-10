@@ -453,12 +453,58 @@ go
 
 Czy jest widoczna różnica w zapytaniach? Jeśli tak to jaka? Aby wymusić użycie indeksu użyj `WITH(INDEX(Address_PostalCode_1))` po `FROM`:
 
-> Wyniki: 
+> Wyniki: Musieliśmy usunąć znaki `n` z zapytania ponieważ powodowały syntax error:
+
 
 ```sql
---  ...
+select addressline1, addressline2, city, stateprovinceid, postalcode  
+from address  
+where postalcode between '98000' and '99999'
 ```
 
+Zapytanie bez indeksu:
+
+*Statystyki*
+
+![](img/ex4/query-1.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex4/query-2.png)
+
+Zapytanie z indeksem 1:
+
+```sql
+select addressline1, addressline2, city, stateprovinceid, postalcode  
+from address  with(index(address_postalcode_1))
+where postalcode between '98000' and '99999'
+```
+
+*Statystyki*
+
+![](img/ex4/query-3.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex4/query-4.png)
+
+Zapytanie z indeksem 2:
+
+```sql
+select addressline1, addressline2, city, stateprovinceid, postalcode  
+from address  with(index(address_postalcode_2))
+where postalcode between '98000' and '99999'
+```
+
+*Statystyki*
+
+![](img/ex4/query-5.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex4/query-6.png)
+
+> Oba indeksy zwracają taki sam plan zapytań. Zamieniają skan tabeli na wyszukanie indeksu. Ich efektywność jest taka sama. Wygląda na to, że w ten sposób nie możemy ich ze sobą porównać. Musimy sprawdzić ich rozmiary. 
 
 Sprawdź rozmiar Indeksów:
 
@@ -475,11 +521,9 @@ go
 Który jest większy? Jak można skomentować te dwa podejścia do indeksowania? Które kolumny na to wpływają?
 
 
-> Wyniki: 
+> Wyniki: Indeks drugi jest większy o około 24 kilobajty. Dzieje się tak, ponieważ w indeks drugi jest tworzony na wszystkich kolumnach. Indeks pierwszy jest tworzony na kodzie pocztowym. Kod pocztowy to wartość, która często się powtarza. Więc w indeksie 2 jest wielokrotnie kopiowana co wpływa na jego większy rozmiar.
 
-```sql
---  ...
-```
+![](img/ex4/indeks-comparison.png)
 
 
 # Zadanie 5 – Indeksy z filtrami
@@ -518,19 +562,53 @@ Przeanalizuj plan dla poniższego zapytania:
 
 Czy indeks został użyty? Dlaczego?
 
-> Wyniki: 
+> Wyniki:
 
-```sql
---  ...
-```
+Zapytanie przed utworzeniem indeksu:
+
+*Statystyki*
+
+![](img/ex5/query-1.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex5/query-2.png)
+
+Zapytanie z indeksem 2:
+
+Zapytanie po utworzeniu indeksu:
+
+*Statystyki*
+
+![](img/ex5/query-3.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex5/query-4.png)
+
+> Wygląda na to, że plany wyglądają tak samo, jednak z jakiegoś powodu optymalizator nie wybiera indeksu do wykonania zapytania.
 
 Spróbuj wymusić indeks. Co się stało, dlaczego takie zachowanie?
 
-> Wyniki: 
-
 ```sql
---  ...
+select productassemblyid, componentid, startdate  
+from billofmaterials with(index(billofmaterials_cond_idx))
+where enddate is not null  
+    and componentid = 327  
+    and startdate >= '2010-08-05'
 ```
+
+*Statystyki*
+
+![](img/ex5/query-5.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex5/query-6.png)
+
+> Po wymuszeniu indeksu normalnie wykonywane jest zapytanie z innym planem. Dzieje się tak zapewne ponieważ oryginalna tebela zawiera nieodfiltrowane wpisy. Z tego powodu indeks nie pokrywa całej tablicy billofmaterials i optymalizator go pomija. Jeśli wymuszamy użycie indeksu zadziała on poprawnie. 
+
+
 
 
 ---
