@@ -148,51 +148,68 @@ Teraz wykonaj poszczególne zapytania (najlepiej każde analizuj oddzielnie). Co
 Zapytanie 1 nie zwraca żadnych wyników przez filtrację po dacie. Żaden rekord nie odpowiada kryteriom ale dalej 
 możemy zbudować plan wykonania zapytania.
 
+*Statystyki*
+
 ![](img/ex1/query1-1.png)
+
+*Plan i czas wykonania*
 
 ![](img/ex1/query1-2.png)
 
 ### Zapytanie 2.
 
-Zapytanie drugie wydobywa datę zamówienia, id produktu, liczbę zamówionych produktów,zniżkę i zsumowaną wartość linetotal.
-Zapytanie jest obsłużone z joinem który łączy je tabelą salesorderdetail by pogrupować zamówienia według daty oraz id produktu, a także by dostarczyć informacji o liczbie zamówionych jednostek.
+Zapytanie drugie wyciąga datę zamówienia, id produktu, liczbę zamówionych produktów, zniżkę i zsumowaną wartość linetotal.
+Zapytanie jest wykonane z joinem, który łączy je tabelą salesorderdetail by pogrupować zamówienia według daty oraz id produktu, a także by dostarczyć informacji o liczbie zamówionych jednostek.
+
+Czas wykonania zapytania jest dość długi, bo wynosi 30 sekund.
+
+*Wynik zapytania*
 
 ![](img/ex1/query2-result.png)
 
-Wykonuje się ono 30 sekund
-
-Plan wykonania zapytania:
+*Statystyki*
 
 ![](img/ex1/query2-1.png)
+
+*Plan i czas wykonania*
 
 ![](img/ex1/query2-2.png)
 
 ### Zapytanie 3.
 
-Kolejne zapytanie również filtruje datę tak, że w wyniku nie dostajemy żadnych rekordów. Podobnie do zapytania 
+Kolejne zapytanie również filtruje datę tak, że w wyniku nie dostajemy żadnych rekordów. Wynik, jest podobny do wyniku z zapytania 
 pierwszego.
 
 Ma bardzo prosty plan wykonania:
 
+*Statystyki*
+
 ![](img/ex1/query3-1.png)
+
+*Plan i czas wykonania*
 
 ![](img/ex1/query3-2.png)
 
 ### Zapytanie 4.
 
-Zapytanie 4 jest podobne do 3. Różnice między nimi są takie, że 4 nie filtruje daty, a zamist tego wświetla rekordy które odpowiadają numerom śledzenia (carriertrackingnumber).
+Zapytanie 4 jest podobne do 3. Różnice między nimi są takie, że 4 nie filtruje po dacie, a zamist tego wyświetla rekordy, które odpowiadają numerom śledzenia (carriertrackingnumber).
 Kolejną różnicą jest sortowanie po nowym, pierwszym wierszu tabeli czyli id zamówienia.
+
+*Wynik zapytania*
 
 ![](img/ex1/query4-result.png)
 
 Plan wykonania zapytania wygląda następująco
 
+*Statystyki*
+
 ![](img/ex1/query4-1.png)
+
+*Plan i czas wykonania*
 
 ![](img/ex1/query4-2.png)
 
-> SSMS sam sugeruje dodanie indeksów nieklastrowych. Plany zapytań wyglądają czasochłonnie i można by je w ten 
-> sposób zoptymalizować
+> SSMS sam sugeruje dodanie indeksów nieklastrowych. Plany zapytań wyglądają czasochłonnie i można by je w ten sposób zoptymalizować
 
 ---
 
@@ -223,6 +240,8 @@ Użyj **Start Analysis**:
 Zaobserwuj wyniki w **Recommendations**.
 
 ![](img/ex2/2.png)
+
+W recomendations, możemy zaobserwować rekomendacje, które podaje nam SSMS.
 
 Przejdź do zakładki **Reports**. Sprawdź poszczególne raporty. Główną uwagę zwróć na koszty i ich poprawę:
 
@@ -410,7 +429,7 @@ go
 
 > Pozostałe trzy indeksy są tworzone dla salesorderheader. Podobnie jak w poprzednim przypadku tworzymy mapowanie sortowanej daty i ID zamówienia do pozostałych kolumn.
 > Tworzony jest też indeks mapujący ID zamówienia na 4 kolumny osobno. Zawierają one pozostałe informacje o datach istotnych dla zamówienia oraz numery sprzedaży i kupna.
-> OStatni indeks to sortowane ID sprzedaży oraz data zamówienia. 
+> Ostatni indeks to sortowane ID sprzedaży oraz data zamówienia. 
 > Te trzy indeksy optymalizują zapytania uwzględniające tabelę salesorderheader
 
 ```sql
@@ -473,71 +492,102 @@ Sprawdź jak zmieniły się Execution Plany. Opisz zmiany:
 
 ### Zapytanie 1.
 
-Stare plany:
+**Stare plany:**
+
+*Statystyki*
 
 ![](img/ex1/query1-1.png)
 
+*Plan i czas wykonania*
+
 ![](img/ex1/query1-2.png)
 
-Nowe plany:
+**Nowe plany:**
+
+*Statystyki*
 
 ![](img/ex2/query1-1.png)
 
+*Plan i czas wykonania*
+
 ![](img/ex2/query1-2.png)
 
-> cały koszt wykonania jest teraz rozłożony pomiędzy wyszukiwaniem w dwóch undeksach a zamaist hash match-owania 
-> inner join jest przeprowadzany przy pomocy zagnieżdżonych pętli.
-> Uzyskujemy potencjalną optymalizację. Index Seek sprawdza jedynie 4 elementy
+> Mozemy zaobserwowac, ze cały koszt wykonania jest teraz rozłożony pomiędzy wyszukiwaniem w dwóch indeksach a zamaist hash match-owania, inner join jest przeprowadzany przy pomocy zagnieżdżonych pętli.
+> Uzyskujemy potencjalną optymalizację. Index Seek sprawdza jedynie 4 elementy.
 
 ### Zapytanie 2.
 
-Stare plany:
+**Stare plany:**
+
+*Statystyki*
 
 ![](img/ex1/query2-1.png)
 
+*Plan i czas wykonania*
+
 ![](img/ex1/query2-2.png)
 
-Nowe plany:
+**Nowe plany:**
+
+*Statystyki*
 
 ![](img/ex2/query2-1.png)
 
+*Plan i czas wykonania*
+
 ![](img/ex2/query2-2.png)
 
-> Jedyna zasadnicza zmiana to skan indeksu zamiast skanu tabel. Działanie joinów pozostaje takie samo.
+> Jedyna zasadnicza zmiana to skan indeksu zamiast skanu tabel. Działanie joinów pozostaje takie same.
 
 ### Zapytanie 3.
 
-Stare plany:
+**Stare plany:**
+
+*Statystyki*
 
 ![](img/ex1/query3-1.png)
 
+*Plan i czas wykonania*
+
 ![](img/ex1/query3-2.png)
 
-Nowe plany:
+**Nowe plany:**
+
+*Statystyki*
 
 ![](img/ex2/query3-1.png)
 
+*Plan i czas wykonania*
+
 ![](img/ex2/query3-2.png)
 
-> W tym przykładzie join jest obsługiwany poprzez zagnieżdżone pętle a odczyty z tabeli poprzez Index Seek. 
+> W tym przykładzie join jest obsługiwany poprzez zagnieżdżone pętle, a odczyty z tabeli poprzez Index Seek. 
 > Wyszukiwanie, nie skanowanie jak w poprzednich przypadkach.
 
 ### Zapytanie 4.
 
-Stare plany:
+**Stare plany:**
+
+*Statystyki*
 
 ![](img/ex1/query4-1.png)
 
+*Plan i czas wykonania*
+
 ![](img/ex1/query4-2.png)
 
-Nowe plany:
+**Nowe plany:**
+
+*Statystyki*
 
 ![](img/ex2/query4-1.png)
+
+*Plan i czas wykonania*
 
 ![](img/ex2/query4-2.png)
 
 > W ostatnim przykładzie sortowanie jest przeprowadzane przed join-em a skan tabel jest zamieniony na wyszukiwanie indeksowe. 
-> Dodatkowo join jest obsłużony przez zagnieżdżone pętle
+> Dodatkowo join jest obsłużony przez zagnieżdżone pętle.
 
 ---
 
@@ -567,8 +617,6 @@ from sys.dm_db_index_physical_stats (db_id('adventureworks2017')
 ,'detailed') -- we want all information
 ```
 
-
-
 ![](img/ex3/2.png)
 
 ![](img/ex3/3.png)
@@ -579,8 +627,8 @@ Jakie są według Ciebie najważniejsze pola?
 
 > Pola które dają najwięcej informacji o indeksach to zdecydowanie avg_page_Space_used_in_percent, record_count oraz avg_record_size_in_bytes
 > avg_page_space_used_in_percent określa efektywność zaalokowanej pamięci
-> avg_fragmentation_in_percent oznacza jak bardzo fragmentowane są dane. Im bardziej tym gorzej. Fizyczna tabela ciągła jest optymalna
-> Dodatkowo index_type_desc opisuje rodzaj indeksu co również jest istotną informacją
+> avg_fragmentation_in_percent oznacza jak bardzo fragmentowane są dane. Im bardziej tym gorzej. Fizyczna tabela ciągła jest optymalna.
+> Dodatkowo index_type_desc opisuje rodzaj indeksu co również jest istotną informacją.
 
 ---
 
@@ -606,15 +654,14 @@ and index_id not in (0) --only clustered and nonclustered indexes
 
 ---
 
-> Wyniki: Niektóre tabele trzeba zoptymalizować. Kryteria zmiany to indeksy o fragmentacji pomiędzy 10 a 15 %, 
-> średnie wykorzystanie strony między 60 a 75%, dla indeksów o więcej niż 8 stronach.
+> Wyniki: Niektóre tabele trzeba zoptymalizować. Kryteria zmiany to indeksy o fragmentacji pomiędzy 10 a 15 %, średnie wykorzystanie strony między 60 a 75%, dla indeksów o więcej niż 8 stronach.
 > Jeśli indeksy spełniają te warunki to są odfiltrowane i zwrócone. Oznacza to, że właśnie te indeksy chcemy zmodyfikować 
 
 > zrzut ekranu/komentarz:
 
 ![](img/ex3/4.png)
 
-> Jak widzimy jedynie 5 indeksów wmaga reorganizacji
+> Jak widzimy jedynie 5 indeksów wymaga reorganizacji.
 
 ---
 
@@ -645,7 +692,7 @@ and index_id not in (0) --only clustered and nonclustered indexes
 
 ## ![](img/ex3/5.png)
 
-> Jedyne indeksy wymagające przebudowy działają na tabeli Person. ich ID to 256002, 256003, 256004
+> Jedyne indeksy wymagające przebudowy działają na tabeli Person. Ich ID to 256002, 256003, 256004
 
 Czym się różni przebudowa indeksu od reorganizacji?
 
@@ -661,9 +708,9 @@ Sprawdź co przechowuje tabela `sys.dm_db_index_usage_stats`:
 
 ---
 
-> Wyniki: Tabela zawiera historię użycia indeksów. Możemy sprawdzić jak często używane są indeksy i jak są przydatne. Może być tak, że będzie stworzony niepotrzebny indeks. W takim przypakdu nie będzie on pewnie używany. Dowiemy się o tym z tej tabeli.
-
 ![](img/ex3/6.png)
+
+> Wyniki: Tabela zawiera historię użycia indeksów. Możemy sprawdzić jak często używane są indeksy i jak są przydatne. Może być tak, że będzie stworzony niepotrzebny indeks. W takim przypakdu nie będzie on pewnie używany. Dowiemy się o tym z tej tabeli.
 
 ---
 
@@ -727,7 +774,6 @@ alter index XMLPATH_Person_Demographics on Person.Person rebuild;
 alter index XMLPROPERTY_Person_Demographics on Person.Person rebuild;
 
 alter index XMLVALUE_Person_Demographics on Person.Person rebuild;
-
 ```
 
 ---
@@ -777,8 +823,6 @@ Zapisz obserwacje ze stron. Co ciekawego udało się zaobserwować?
 
 ---
 
-> Wyniki:
-
 - Dla strony `13720` dostaliśmy wyłącznie wynik "Messages". Wygląda on następująco
 
 ![](img/ex4/2.png)
@@ -792,12 +836,7 @@ Zapisz obserwacje ze stron. Co ciekawego udało się zaobserwować?
 
 ![](img/ex4/5.png)
 
-```sql
-
-```
-
-- Dla strony `8089` dostajemy dużo mniej obszerną informację niż dla 13720. Brakuje na przykład 
-  wypisywanych informacji o slotach
+- Dla strony `8089` dostajemy dużo mniej obszerną informację niż dla 13720. Brakuje na przykład wypisywanych informacji o slotach
 
 ![](img/ex4/6.png)
 
