@@ -376,18 +376,33 @@ Która część zapytania ma największy koszt?
 ---
 > Wyniki: 
 
-```sql
---  ...
-```
+*Statystyki*
+
+![](img/ex3/query-1.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex3/query-2.png)
+
+> Najbardziej kosztowne jest sortowanie. Zawiera ono 87% kosztu całego zapytania. 
 
 Jaki indeks można zastosować aby zoptymalizować koszt zapytania? Przygotuj polecenie tworzące index.
 
 
 ---
-> Wyniki: 
+> Wyniki: Jak zauważyliśmy w poprzednim punkcie największy koszt w zapytaniu ma sortowanie. Potencjalną optymalizacją jest stworzenie indeksu z posortowanymi wartościami.
 
 ```sql
---  ...
+create index idx_purchaseorderdetail_rejected_product
+on purchaseorderdetail (rejectedqty desc, productid asc);
+```
+
+> Użycie powyższego indeksu praktycznie nie zmieniło planu i czasu wykonania. Należy uwzględnić wszystkie potrzebne kolumny.
+
+```sql
+create index idx_purchaseorderdetail_rejected_product
+on purchaseorderdetail (rejectedqty desc, productid asc)
+include (orderqty, duedate);
 ```
 
  Ponownie wykonaj analizę zapytania:
@@ -396,9 +411,15 @@ Jaki indeks można zastosować aby zoptymalizować koszt zapytania? Przygotuj po
 ---
 > Wyniki: 
 
-```sql
---  ...
-```
+*Statystyki*
+
+![](img/ex3/query-3.png) 
+
+*Plan i czas wykonania*
+
+![](img/ex3/query-4.png)
+
+> Jak widać z planu wykonania usunięte zostało sortowanie. Zamiast skanu tabeli wykonywany jest skan indeksu. Tam jest też 98% kosztu wykonania. Pozostałe 2 to operacja matematyczna obliczania żądanej wartości. Uzyskujemy optymalizację. poprzednio 87% kosztu stanowiło sortowanie. Pozbywamy się całego tego kroku.
 
 # Zadanie 4
 
