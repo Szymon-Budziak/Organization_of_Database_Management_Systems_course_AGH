@@ -840,7 +840,7 @@ Zapisz obserwacje ze stron. Co ciekawego udało się zaobserwować?
 
 ![](img/ex4/6.png)
 
-> Informacje stron ewidentnie różnią się w zależności od typu.
+> Informacje stron ewidentnie różnią się w zależności od typu. Dla strony `13720` pojawiły się kolumny danych i opis slotów i kolumn a na dwóch pozostałych opis bufora i nagłówka strony.
 
 ---
 
