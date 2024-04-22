@@ -259,7 +259,7 @@ _Execution Plan dla zapytania 5_
 
 > Wyniki dwóch pierwszych zapytań wyglądają tak samo. Przy wykonywaniu zapytania pierwszego, - bez spacyfikowania kolejności, - dostajemy taki sam wynik jak przy kolejności rosnącej. Oznacza to, że właśnie w takiej kolejności posortowany jest indeks.
 
-> Możemy zauważyć, że w drugim zapytaniu, że indeks został wykorzystany, na co wskazuje operacja `Clustered Index Seek` w _Execution Plan dla zapytania 4_, jednak żadne dodatkowe sortowanie nie zostało wykonane. Jeśli chodzi o trzeci zapytanie, to również widzimy, że indeks został wykorzystany. Wskazuje na to operacja `Clustered Index Seek` w _Execution Plan dla zapytania 5_. Nie jest wykonywane dodatkowe sortowanie. Plany wykonania wszystkich trzech zapytań wyglądają tak samo.
+> Możemy zauważyć, że w drugim zapytaniu, indeks został wykorzystany, na co wskazuje operacja `Clustered Index Seek` w _Execution Plan dla zapytania 4_, jednak żadne dodatkowe sortowanie nie zostało wykonane. Jeśli chodzi o trzeci zapytanie, to również widzimy, że indeks został wykorzystany. Wskazuje na to operacja `Clustered Index Seek` w _Execution Plan dla zapytania 5_. Nie jest wykonywane dodatkowe sortowanie. Plany wykonania wszystkich trzech zapytań wyglądają tak samo.
 
 > Wniosek: Oba indeksy działają poprawnie, dzięki czemy w obu przypadkach unikamy koniecznośći sortowania.
 
@@ -645,7 +645,7 @@ WHERE City = 'City2' and Salary < 5000
 
 > Narzędzie sugeruje utworzeniu indeksu, który został przez nas już zdefiniowany, czyli indeks wykorzystujący kilka atrybutów.
 
-> Wniosek: Indeksy wykorzystujące kilka atrybutów, wraz z include są przydatne, gdy zapytania obejmują wiele kolumn w warunkach wyszukiwania zapytania.
+> Wniosek: Indeksy wykorzystujące kilka atrybutów, wraz z include są przydatne, gdy zapytania obejmują wiele kolumn.
 
 **Komantarz**
 
