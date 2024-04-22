@@ -492,46 +492,32 @@ Sprawdź jak zmieniły się Execution Plany. Opisz zmiany:
 
 ### Zapytanie 1.
 
-**Stare plany:**
+**Stary plan:**
 
-*Statystyki*
 
-![](img/ex1/query1-1.png)
 
 *Plan i czas wykonania*
 
 ![](img/ex1/query1-2.png)
 
-**Nowe plany:**
-
-*Statystyki*
-
-![](img/ex2/query1-1.png)
+**Nowy plan:**
 
 *Plan i czas wykonania*
 
 ![](img/ex2/query1-2.png)
 
 > Mozemy zaobserwowac, ze cały koszt wykonania jest teraz rozłożony pomiędzy wyszukiwaniem w dwóch indeksach a zamaist hash match-owania, inner join jest przeprowadzany przy pomocy zagnieżdżonych pętli.
-> Uzyskujemy potencjalną optymalizację. Index Seek sprawdza jedynie 4 elementy.
+> Uzyskujemy optymalizację. Index Seek sprawdza jedynie 4 elementy.
 
 ### Zapytanie 2.
 
-**Stare plany:**
-
-*Statystyki*
-
-![](img/ex1/query2-1.png)
+**Stary plan:**
 
 *Plan i czas wykonania*
 
 ![](img/ex1/query2-2.png)
 
-**Nowe plany:**
-
-*Statystyki*
-
-![](img/ex2/query2-1.png)
+**Nowy plan:**
 
 *Plan i czas wykonania*
 
@@ -541,21 +527,13 @@ Sprawdź jak zmieniły się Execution Plany. Opisz zmiany:
 
 ### Zapytanie 3.
 
-**Stare plany:**
-
-*Statystyki*
-
-![](img/ex1/query3-1.png)
+**Stary plan:**
 
 *Plan i czas wykonania*
 
 ![](img/ex1/query3-2.png)
 
-**Nowe plany:**
-
-*Statystyki*
-
-![](img/ex2/query3-1.png)
+**Nowy plan:**
 
 *Plan i czas wykonania*
 
@@ -566,28 +544,20 @@ Sprawdź jak zmieniły się Execution Plany. Opisz zmiany:
 
 ### Zapytanie 4.
 
-**Stare plany:**
-
-*Statystyki*
-
-![](img/ex1/query4-1.png)
+**Stary plan:**
 
 *Plan i czas wykonania*
 
 ![](img/ex1/query4-2.png)
 
-**Nowe plany:**
-
-*Statystyki*
-
-![](img/ex2/query4-1.png)
+**Nowy plan:**
 
 *Plan i czas wykonania*
 
 ![](img/ex2/query4-2.png)
 
 > W ostatnim przykładzie sortowanie jest przeprowadzane przed join-em a skan tabel jest zamieniony na wyszukiwanie indeksowe. 
-> Dodatkowo join jest obsłużony przez zagnieżdżone pętle.
+> Dodatkowo join jest obsłużony przez zagnieżdżone pętle. Uzyskujemy znaczące przyspieszenie.
 
 ---
 
@@ -705,6 +675,10 @@ Czym się różni przebudowa indeksu od reorganizacji?
 ---
 
 Sprawdź co przechowuje tabela `sys.dm_db_index_usage_stats`:
+
+```sql
+select * from  sys.dm_db_index_usage_stats;
+```
 
 ---
 
