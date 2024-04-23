@@ -116,15 +116,19 @@ Skomentuj oba zapytania. Czy indeks został użyty w którymś zapytaniu, dlacze
 
 ---
 
-> W pierwszym zapytaniu indeks zostaje użyty. Zapytanie zwraca 17 wartości
+> W pierwszym zapytaniu indeks zostaje użyty. Zapytanie zwraca 17 wartości.
+
+_Execution Plan 1_
 
 ![](img/ex1/query1.png)
 
-> Jednak drugie zapytanie wykonuje się bez użycia indeksu. Wybierane jest 278 wartości
+> Jednak drugie zapytanie wykonuje się bez użycia indeksu. Wybierane jest 278 wartości.
+
+_Execution Plan 2_
 
 ![](img/ex1/query2.png)
 
-> Indeks jest użyty w zapytaniu, które zawiera warunek użyty przy tworzeniu go a w przeciwnym przypadku nie. Dzieje się tak, ponieważ optymalizator sprawdza, czy warunek z zapytania jest obecny w indeksie i na jego podstawie decyduje, czy użyje indeksu w wykonaniu zapytania.
+> Indeks jest użyty w zapytaniu, które zawiera warunek użyty przy tworzeniu go a w przeciwnym przypadku nie. Dzieje się tak, ponieważ optymalizator sprawdza, czy warunek z zapytania jest obecny w indeksie i na jego podstawie decyduje, czy użyje indeksu w wykonaniu zapytania. Wniosek: Tylko pierwsze zapytanie wykorzystuje indeks, drugie nie.
 
 ```sql
 --  sprawdzany warunek:
@@ -141,6 +145,8 @@ from product
 where productsubcategoryid >= 27 or productsubcategoryid <= 36
 ```
 
+_Execution Plan 3_
+
 ![](img/ex1/query3.png)
 
 # Zadanie 2 – indeksy klastrujące
@@ -152,6 +158,10 @@ Skopiuj ponownie tabelę SalesOrderHeader do swojej bazy danych:
 ```sql
 select * into salesorderheader2 from adventureworks2017.sales.salesorderheader
 ```
+
+_Wynik_
+
+![](img/ex2/results0.png)
 
 Wypisz tysiąc pierwszych zamówień:
 
@@ -166,31 +176,33 @@ Stwórz indeks klastrujący według OrderDate:
 create clustered index order_date2_idx on salesorderheader2(orderdate)
 ```
 
+_Wynik_
+
+![](img/ex2/results6.png)
+
 Wypisz ponownie tysiąc pierwszych zamówień. Co się zmieniło?
 
 ---
 
-> Wypisane zamówenia wyglądają tak samo
-
-Wyniki dla zapytania 1:
+_Wyniki dla 1000 pierwszych zamówień przed stworzeniem indeksu klastrującego:_
 
 ![](img/ex2/results1.png)
 
-Wyniki dla zapytania 2:
-
-![](img/ex2/results2.png)
-
-> Zmienia się jednak plan wykonania zapytania:
-
-Plan dla zapytania 1:
+_Execution Plan_
 
 ![](img/ex2/plan1.png)
 
-Plan dla zapytania 2:
+_Wyniki dla 1000 pierwszych zamówień po stworzeniu indeksu klastrującego:_
+
+![](img/ex2/results2.png)
+
+_Execution Plan_
 
 ![](img/ex2/plan2.png)
 
-> Użycie indeksu znacząco ogranicza czas ze względu na usunięcie sortowania. Przy tworzeniu indeksu nie specyfikujemy bezpośrednio tego, że musi być posortowany, jednak użycie go sortowanie. Można z tego wywnioskować, że domyślnie tworzony jest indeks posortowany.
+> Możemy zauważyć, że wypisane zamówenia wyglądają tak samo, co nie jest zdziwieniem, ponieważ indeks klastrujący nie zmienia kolejności wierszy w tabeli, a jedynie sposób ich przechowywania. Zmienia się jednak plan wykonania zapytania:
+
+> Użycie indeksu w drugim zapytaniu znacząco ogranicza czas ze względu na usunięcie sortowania. Przy tworzeniu indeksu klastrującego na kolumnę, pozbywamy się konieczności sortowania, czyli najbardziej kosztownej operacji dzięki czemu koszt zapytania jest znacznie mniejszy. Można z tego wywnioskować, że domyślnie tworzony jest indeks posortowany. W przeciwieństwie, w pierwszym przypadku, gdzie nie mamy jeszcze indeksu jest realizowana kosztowna operacja sortowania, która stanowi znaczą jego część.
 
 Sprawdź zapytanie:
 
@@ -221,33 +233,35 @@ where orderdate between '2010-10-01' and '2011-06-01'
 order by orderdate desc
 ```
 
-Wyniki dla zapytania 3:
+_Wyniki dla zapytania 3_
 
 ![](img/ex2/results3.png)
 
-Wyniki dla zapytania 4:
-
-![](img/ex2/results4.png)
-
-Wyniki dla zapytania 5:
-
-![](img/ex2/results5.png)
-
-> Wyniki dwóch pierwszych zapytań wyglądają tak samo. Przy wykonywaniu zapytania pierwszego, - bez spacyfikowania kolejności, - dostajemy taki sam wynik jak przy kolejności rosnącej. Oznacza to, że właśnie w takiej kolejności posortowany jest indeks.
-
-Plan dla zapytania 3:
+_Execution Plan dla zapytania 3_
 
 ![](img/ex2/plan3.png)
 
-Plan dla zapytania 4:
+_Wyniki dla zapytania 4_
+
+![](img/ex2/results4.png)
+
+_Execution Plan dla zapytania 4_
 
 ![](img/ex2/plan4.png)
 
-Plan dla zapytania 5:
+_Wyniki dla zapytania 5_
+
+![](img/ex2/results5.png)
+
+_Execution Plan dla zapytania 5_
 
 ![](img/ex2/plan5.png)
 
-> Plany wykonania wszystkich trzech zapytań wyglądają tak samo.
+> Wyniki dwóch pierwszych zapytań wyglądają tak samo. Przy wykonywaniu zapytania pierwszego, - bez spacyfikowania kolejności, - dostajemy taki sam wynik jak przy kolejności rosnącej. Oznacza to, że właśnie w takiej kolejności posortowany jest indeks.
+
+> Możemy zauważyć, że w drugim zapytaniu, indeks został wykorzystany, na co wskazuje operacja `Clustered Index Seek` w _Execution Plan dla zapytania 4_, jednak żadne dodatkowe sortowanie nie zostało wykonane. Jeśli chodzi o trzeci zapytanie, to również widzimy, że indeks został wykorzystany. Wskazuje na to operacja `Clustered Index Seek` w _Execution Plan dla zapytania 5_. Nie jest wykonywane dodatkowe sortowanie. Plany wykonania wszystkich trzech zapytań wyglądają tak samo.
+
+> Wniosek: Oba indeksy działają poprawnie, dzięki czemy w obu przypadkach unikamy koniecznośći sortowania.
 
 # Zadanie 3 – indeksy column store
 
@@ -309,15 +323,35 @@ Sprawdź różnicę pomiędzy przetwarzaniem w zależności od indeksów. Porów
 
 ---
 
-Zapytanie z indeksem klastrowym
+**Zapytanie z indeksem klastrowym**
+
+_Wynik_
+
+![](img/ex3/results1.png)
+
+_Execution Plan_
 
 ![](img/ex3/plan1.png)
 
-Zapytanie z indeksem ColumnStore
+_Estimated Subtree Cost_
+
+![](img/ex3/cost1.png)
+
+**Zapytanie z indeksem ColumnStore**
+
+_Wynik_
+
+![](img/ex3/results2.png)
+
+_Execution Plan_
 
 ![](img/ex3/plan2.png)
 
-> Indeks typu ColumnStore w przeciwieństwie do zwykłych indeksów ustawia kolejność pamięci kolumnami, a nie wierszami. Przez to, zapytanie, które bierze pod uwagę całość kolumny w celu pogrupowania lub obliczenia jej średnich wartości może wykonać się szybciej i prościej - bez dodania równoległości.
+_Estimated Subtree Cost_
+
+![](img/ex3/cost2.png)
+
+> Indeks typu ColumnStore w przeciwieństwie do zwykłych indeksów ustawia kolejność pamięci kolumnami, a nie wierszami. Przez to, zapytanie, które bierze pod uwagę całość kolumny w celu pogrupowania lub obliczenia jej średnich wartości może wykonać się szybciej i prościej - bez dodania równoległości. Możemy jeszcze zauważyć, że Estimated Subtree Cost dla zwykłego indeksu to 6,18007 a Columnstore to 1,09369 co jest prawie 6 razy mniejsze.
 
 # Zadanie 4 – własne eksperymenty
 
@@ -361,6 +395,8 @@ Tworzymy tabelę `Orders` z następującymi kolumnami:
 - **OrderDate**
 - **OrderPrice**
 
+Table zawierać będzie id zamówniea, id klienta, datę zamówienia oraz cenę zamówienia.
+
 ```sql
 CREATE TABLE Orders (
   OrderID INT NOT NULL PRIMARY KEY,
@@ -370,7 +406,9 @@ CREATE TABLE Orders (
 )
 ```
 
-Wypełniamy tabelę przykładowymi danymi:
+_Wynik_
+
+Wypełniamy tabelę przykładowymi danymi z 100 000 rekordami:
 
 ```sql
 DECLARE @count INT = 0
@@ -393,16 +431,23 @@ Dodajemy indeks klastrowany dla kolumny `OrderDate`, która nie jest kluczem gł
 CREATE CLUSTERED INDEX Index_OrderDate ON Orders (OrderDate);
 ```
 
+![](img/ex4/error1.png)
+
+> Otrzymujemy jednak błąd! Wynika to z faktu, że klucz główny jest już indeksem klastrowym. W takim przypadku, aby móc stworzyć indeks klastrowy dla innej kolumny, musimy usunąć indeks klastrowy dla klucza głównego. W naszym przypadku kluczem głównym jest `OrderID` i usuniemy go w taki sposób:
+
+```sql
+ALTER TABLE Orders
+DROP CONSTRAINT PK__Orders__C3905BAF2BFF50E1;
+```
+
+Teraz możemy dodać nasz indeks.
+
 **Przykładowe zapytania**
 
-Wykonujemy teraz przykładowe zapytania. Pierwsze zwróci nam wszystkie zamówienia z danego dnia i będzie to zapytanie, które będzi korzystało z indeksu klastrowanego. Drugie, które będzie odwoływało się w klauzuli where do klucza głównego nie będzie korzystało z naszego wcześniej utworzonego indeksu klastrowanego. Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
+> Wykonujemy teraz przykładowe zapytanie. Zwróci nam on wszystkie dane dla zamówień z danego dnia. Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
 
 ```sql
 SELECT * FROM Orders WHERE OrderDate = '2020-02-14'
-```
-
-```sql
-SELECT * FROM Orders WHERE OrderID = 58
 ```
 
 **Wyniki**
@@ -419,23 +464,17 @@ SELECT * FROM Orders WHERE OrderID = 58
 | 1         | ![](img/ex4/query1plan.png) |
 | 2         | ![](img/ex4/query2plan.png) |
 
-**Plany po zmianie indeksu**
-
-| Zapytanie | Plan wykonania               |
-| --------- | ---------------------------- |
-| 1         | ![](img/ex4/query1plan2.png) |
-| 2         | ![](img/ex4/query2plan2.png) |
-
 **Komantarz**
 
-> Możemy zauważyć, że w przypadku zapytania, które korzysta z indeksu klastrowanego, czas wykonania zapytania jest znacznie krótszy. W przypadku zapytania, które nie korzysta z indeksu klastrowanego, czas wykonania zapytania jest dłuższy. W przypadku zapytania, które korzysta z indeksu klastrowanego, plan wykonania zapytania jest prostszy, a w przypadku zapytania, które nie korzysta z indeksu klastrowanego, plan wykonania zapytania jest bardziej skomplikowany. Różnice jednak nie są bardzo duże, bo są to tysięczne sekundy, ale w przypadku korzystania z indeksu klastrowanego, możemy zaobserwować na schemtach wykonywanie `Seek` w przeciwieństwie do `Scan` w przypadku niekorzystania z indeksu klastrowanego.
+> Możemy zauważyć, że w przypadku zapytania, które korzysta z indeksu klastrowanego, czas wykonania zapytania jest znacznie krótszy. W przypadku zapytania, które nie korzysta z indeksu klastrowanego, czas wykonania zapytania jest dłuższy, ponieważ wykonuje `Table Scan`. Zapytanie z indeksem wykonuje `Clustered Index Seek`. Dzięki indeksowi, koszt zapytania jest znacznie niższy, a liczba operacji wejścia/wyjścia jest mniejsza.
 
-> Aby móc użyć stworzonego indeksu należało usunąc już isntiejący dla Primary Key. Zostało to wykonane następującą komendą:
+**Rekomendacja Databse Engine Tuning Advisor**
 
-```sql
-ALTER TABLE Orders
-DROP CONSTRAINT PK__Orders__C3905BAF4281CDA8;
-```
+![](img/ex4/recommend1.png)
+
+> Narzędzie sugeruje utworzenie indeksu nieklastrowego na OrderDate. W naszym przypadku usunęliśmy indeks klastrowy dla klucza głównego i zastąpiliśmy go nowym indeksem klastrowym dla OrderDate.
+
+> Wniosek: Indeks klastrowany jest przydatny, gdy zapytania często odwołują się do kolumny, która jest indeksem klastrowym. W przypadku, gdy kolumna nie jest kluczem głównym, musimy usunąć indeks klastrowy dla klucza głównego, aby móc stworzyć indeks klastrowy dla innej kolumny.
 
 ### Nieklastrowane
 
@@ -450,6 +489,8 @@ Tworzymy tabelę `Products` z następującymi kolumnami:
 - **CategoryID**
 - **ProductPrice**
 
+Tabela ta zawierać będzie id produktu, nazwę produktu, id kategori oraz cenę produktu.
+
 ```sql
 CREATE TABLE Products (
   ProductID INT NOT NULL PRIMARY KEY,
@@ -459,7 +500,7 @@ CREATE TABLE Products (
 )
 ```
 
-Wypełniamy tabelę przykładowymi danymi:
+Wypełniamy tabelę przykładowymi danymi z 100 000 rekordami:
 
 ```sql
 DECLARE @count INT = 0
@@ -476,6 +517,10 @@ BEGIN
 END
 ```
 
+_Wynik_
+
+![](img/ex4/result2.png)
+
 Dodajemy indeks nieklastrowany dla kolumny `CategoryID`:
 
 ```sql
@@ -484,14 +529,10 @@ CREATE NONCLUSTERED INDEX Index_CategoryID ON Products (CategoryID);
 
 **Przykładowe zapytania**
 
-Wykonujemy teraz przykładowe zapytania. Pierwsze zwróci nam wszystkie produkty z danej kategorii i będzie to zapytanie, które nie będzie korzystało z indeksu nieklastrowego. Drugie, które będzie bezpośrednio korzystało z indeksu w klauzuli WITH. Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
+> Wykonujemy teraz przykładowe zapytanie, które zwróci nam wszystkie dane dla kateogri równej 5.Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
 
 ```sql
 SELECT * FROM Products WHERE CategoryID = 5
-```
-
-```sql
-SELECT * FROM Products WITH(INDEX(Index_CategoryID)) WHERE CategoryID = 5
 ```
 
 **Wyniki**
@@ -510,7 +551,13 @@ SELECT * FROM Products WITH(INDEX(Index_CategoryID)) WHERE CategoryID = 5
 
 **Komantarz**
 
-> W przypadku indeksu nieklastrowego, zapytanie wykonuje się dłużej, ponieważ musi przeszukać całą tabelę. W przypadku korzystania z indeksu, zapytanie wykonuje się szybciej, ponieważ optymalizator korzysta z indeksu, który jest posortowany i zawiera tylko interesujące nas wartości. W przypadku indesku klastrowego wykonujemy `Scan` w przeciwieństwie do `Nested Loop` który jest następnie rozbijany na `Index Seek` oraz `Key Lookup`. Powoduje to, że zapytanie wykonuje się nieznacznie dłużej.
+> Użycie indeksu nieklastrowego przyspiesza nam działanie zapytania. Możemy zauważyć, że pierwsze zapytanie, czyli zapytanie bez indeksu wykonuje się o około 4 razy dłużej niż drugie, które ten indeks wykorzystuje. Zapytanie z indeksem wykonuje `Index Seek` natomiast to bez indeksu scana całej tabeli, co można zauważyć na planie wykonania.
+
+**Rekomendacja Databse Engine Tuning Advisor**
+
+![](img/ex4/recommend2.png)
+
+> Narzędzie sugeruje utworzenie nieklastrowego indeksu na CategoryID, czyli takiego jaki został przez nas wcześniej stworzony.
 
 ### Indeksy wykorzystujące kilka atrybutów, indeksy include
 
@@ -526,6 +573,8 @@ Tworzymy tabelę `Employees` z następującymi kolumnami:
 - **City**
 - **Salary**
 
+Tabela zawierać będzie rekordy z danymi takimi jak: id pracownika, imie oraz naziwsko pracownika, miasto zamieszkania i jego zarobki.
+
 ```sql
 CREATE TABLE Employees (
   EmployeeID INT NOT NULL PRIMARY KEY,
@@ -536,7 +585,7 @@ CREATE TABLE Employees (
 )
 ```
 
-Wypełniamy tabelę przykładowymi danymi:
+Wypełniamy tabelę przykładowymi danymi z 100 000 rekordami:
 
 ```sql
 DECLARE @count INT = 0
@@ -555,34 +604,25 @@ BEGIN
 END
 ```
 
-Dodajemy indeks nieklastrowany dla kolumn `City` i `Salary`, jako indeksy wykorzystujące kilka atrybutów - include:
+_Wynik_
+
+![](img/ex4/result3.png)
+
+Dodajemy indeks nieklastrowany dla kolumny `City` oraz include dla `Name`, `Surname` i `Salary`:
 
 ```sql
-CREATE NONCLUSTERED INDEX Index_City_Salary ON Employees (City) INCLUDE (Salary);
+CREATE NONCLUSTERED INDEX Index_City_Salary
+ON Employees (City) INCLUDE (Name, Surname, Salary);
 ```
 
 **Przykładowe zapytania**
 
-Wykonujemy teraz przykładowe zapytania. Pierwsze zwróci nam miasto oraz średnie zarobki w mieście `City1`, które nie będzie korzystało z utworzonego indeksu. Drugie, które będzie korzystało z indeksu, ale nie bezpośrednio i zwróci nam imie, nazwisko oraz zarobki wszystkich pracowników w mieście `City1` oraz których zarobki są poniżej 5000. Oraz trzecie, które będzie korzystało bezpośrednio z indeksu w klauzuli WITH. Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
-
-```sql
-SELECT City, AVG(Salary)
-FROM Employees
-WHERE City = 'City1'
-GROUP BY City
-```
+> Wykonujemy teraz przykładowe zapytanie. W zapytaniu tym chcemy otrzymać Imiona, Nazwiska, Miasto oraz zarobki osób z miasta City2 z zarobkami poniżej 5000. Sprawdzimy wyniki bez indeksu oraz dla indeksu. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
 
 ```sql
 SELECT Name, Surname, Salary
 FROM Employees
-WHERE City = 'City1' AND Salary < 5000
-```
-
-```sql
-SELECT Name, Surname, AVG(Salary) as AvgSalary
-FROM Employees WITH(INDEX(Index_City_Salary))
-WHERE City = 'City1' AND Salary < 5000
-GROUP BY Name, Surname
+WHERE City = 'City2' and Salary < 5000
 ```
 
 **Wyniki**
@@ -591,7 +631,6 @@ GROUP BY Name, Surname
 | --------- | ----------------------- |
 | 1         | ![](img/ex4/query5.png) |
 | 2         | ![](img/ex4/query6.png) |
-| 3         | ![](img/ex4/query7.png) |
 
 **Plany wykonania**
 
@@ -599,11 +638,18 @@ GROUP BY Name, Surname
 | --------- | --------------------------- |
 | 1         | ![](img/ex4/query5plan.png) |
 | 2         | ![](img/ex4/query6plan.png) |
-| 3         | ![](img/ex4/query7plan.png) |
+
+**Rekomendacja Databse Engine Tuning Advisor**
+
+![](img/ex4/recommend3.png)
+
+> Narzędzie sugeruje utworzeniu indeksu, który został przez nas już zdefiniowany, czyli indeks wykorzystujący kilka atrybutów.
+
+> Wniosek: Indeksy wykorzystujące kilka atrybutów, wraz z include są przydatne, gdy zapytania obejmują wiele kolumn.
 
 **Komantarz**
 
-> W tym ekperymencie przetestowane zostały 3 zapytania. Możemy zauważyć, że w przypadku zapytania, które ni używa indeksu, cały plan składa się z 3 etapów: Compute Scalar, Stream Aggregate i dopiero Index Seek. W przypadku drugiego zapytania, które korzysta z indeksu, ale nie bezpośrednio, plan składa się z jednego etapu - Inde Scan W przypadku trzeciego zapytania, które korzysta z indeksu bezpośrednio, plan składa się z już z kkilku etapów które są mocno rozbijane na pomniejsze. Możemy zauważyć, że w przypadku zapytania, które korzysta z indeksu, ale nie bezpośrednio, czas wykonania zapytania jest dłuższy, ponieważ optymalizator musi wykonać dodatkowe operacje. W przypadku zapytania, które korzysta z indeksu bezpośrednio, czas wykonania zapytania jest krótszy, ponieważ optymalizator korzysta z indeksu, który jest posortowany i zawiera tylko interesujące nas wartości.
+> W tym ekperymencie, możemy zauważyć, że w przypadku zapytania, które nie używa indeksu, wykonywane jest pełne skanowanie tabeli `Index Seek`. W przypadku zapytania, które korzysta z indeksu, wykonywany jest `Inde Scan`. Dzięki nim zapytania stają się bardziej wydajne, bo SZBD może w szybszy sposób uzsykać dostęp do danych, które spełniają kryterium z zapytania.
 
 ### Filtered Index (Indeks warunkowy)
 
@@ -618,6 +664,8 @@ Tworzymy tabelę `Customer` z następującymi kolumnami:
 - **City**
 - **Mail**
 
+Tabela ta będzie przechowywać dane o klientach, ich imionach, miastach w których mieszkają oraz mailach.
+
 ```sql
 CREATE TABLE Customer (
   CustomerID INT NOT NULL PRIMARY KEY,
@@ -627,7 +675,7 @@ CREATE TABLE Customer (
 )
 ```
 
-Wypełniamy tabelę przykładowymi danymi:
+Wypełniamy tabelę przykładowymi danymi z 100 000 rekordami:
 
 ```sql
 DECLARE @count INT = 0
@@ -644,6 +692,10 @@ BEGIN
 END
 ```
 
+_Wynik_
+
+![](img/ex4/result4.png)
+
 Dodajemy indeks warunkowy (filtered index) dla kolumny `City`, dla określonego miasta np. 'City3':
 
 ```sql
@@ -655,7 +707,7 @@ WHERE City = 'City3';
 
 **Przykładowe zapytania**
 
-Wykonujemy teraz przykładowe zapytania. Pierwsze, które korzystać będzie z indeksu warunkowego zwróci nam wszystkie dane o Customerach z miasta `City3`. Drugie, które nie będzie korzystać z indeksu warunkowego, zwróci nam wszystkie dane o Customerach z miasta `City1`. Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
+> Wykonujemy teraz przykładowe zapytania. Pierwsze, które korzystać będzie z indeksu warunkowego zwróci nam wszystkie dane o Customerach z miasta `City3`. Drugie, które nie będzie korzystać z indeksu warunkowego, zwróci nam wszystkie dane o Customerach z miasta `City1`. Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
 
 ```sql
 SELECT *
@@ -669,14 +721,14 @@ FROM Customer
 WHERE City = 'City1'
 ```
 
-**Wyniki**
+_Wynik_
 
 | Zapytanie | Wynik                   |
 | --------- | ----------------------- |
 | 1         | ![](img/ex4/query8.png) |
 | 2         | ![](img/ex4/query9.png) |
 
-**Plany wykonania**
+_Plany wykonania_
 
 | Zapytanie | Plan wykonania              |
 | --------- | --------------------------- |
@@ -685,7 +737,15 @@ WHERE City = 'City1'
 
 **Komantarz**
 
-> W tym eksperymencie, możemy zauważyć, że tam gdzie jest użyty indeks warunkowy, zapytanie wykonuje się szybciej i to o wiele. Korzystamy tam z `Index Seek`. W przypadku zapytania, które korzysta z indeksu warunkowego, plan wykonania zapytania jest prostszy, a w przypadku zapytania, które nie korzysta z indeksu warunkowego, plan wykonania zapytania jest bardziej skomplikowany. W przypadku zapytania, które korzysta z indeksu warunkowego, czas wykonania zapytania jest krótszy, ponieważ optymalizator korzysta z indeksu, który zawiera tylko interesujące nas wartości. W przypadku zapytania, które nie korzysta z indeksu warunkowego, czas wykonania zapytania jest dłuższy, ponieważ optymalizator musi przeszukać całą tabelę, wykonując scana tabeli, co można zaobserwować na planie wykonania zapytania, co jest przedstawione jako `Clustered Index Scan`.
+> W tym eksperymencie, możemy zauważyć, że tam gdzie jest użyty indeks warunkowy, zapytanie wykonuje się szybciej i to o wiele. Korzystamy tam z `Index Seek`. W przypadku zapytania, które korzysta z indeksu warunkowego, czas wykonania zapytania jest krótszy, ponieważ optymalizator korzysta z indeksu, który zawiera tylko interesujące nas wartości. W przypadku zapytania, które nie korzysta z indeksu warunkowego, czas wykonania zapytania jest dłuższy, ponieważ optymalizator musi przeszukać całą tabelę, wykonując scana tabeli, co można zaobserwować na planie wykonania zapytania, przedstawione jako `Clustered Index Scan`. Dzięki indeksowi, koszt zapytania jest znacznie niższy, a liczba operacji wejścia/wyjścia jest mniejsza.
+
+**Rekomendacja Databse Engine Tuning Advisor**
+
+![](img/ex4/recommend4.png)
+
+> Narzędzie sugeruje utworzenie identycznego indeksu, co wcześniej stworzony przez nas z dodatkową rekomendacją uporządkowania kategorii rosnąco.
+
+> Wnioski: Indeks warunkowy jest skuteczny gdy zapytanie pokrywa się z jego warunkami. Kiedy warunki nie są spełnione, może dojść do kosztownego pełnego skanowania tabeli.
 
 ### Kolumnowe
 
@@ -699,6 +759,8 @@ Tworzymy tabelę `Orders` z następującymi klumnami:
 - **Quantity**
 - **OrderPrice**
 
+Tabela ta będzie przechowywać dane o zamówwieniach, identyfikatorach klientów, produktach, ilości produktów oraz ich cenie.
+
 ```sql
 CREATE TABLE Orders (
   OrderID INT NOT NULL PRIMARY KEY,
@@ -709,7 +771,7 @@ CREATE TABLE Orders (
 )
 ```
 
-Wypełniamy tabelę przykładowymi danymi:
+Wypełniamy tabelę przykładowymi danymi z 100 000 rekordami:
 
 ```sql
 DECLARE @count INT = 0
@@ -727,6 +789,10 @@ BEGIN
 END
 ```
 
+_Wynik_
+
+![](img/ex4/result5.png)
+
 Tworzymy indeks kolumnowy na kolumnę `OrderPrice`:
 
 ```sql
@@ -736,7 +802,7 @@ ON Orders (OrderPrice);
 
 **Przykładowe zapytania**
 
-Wykonujemy teraz przykładowe zapytania. Pierwsze, które nie korzystać będzie z indeksu kolumnowego na `OrderPrice` zwróci nam ProductId oraz TotalSale, co jest sumą cen zamówień. Drugie, które będzie korzystać z indeksu kolumnowego zwróci nam to samo, jednak czas wykonania będzie znacznie szybszy, co zauważymy poniżej. Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
+> Wykonujemy teraz przykładowe zapytanie, które zwróci nam ProductID oraz TotalSale. Pierwsze zapytanie nie będzie korzystać z indeksu kolumnowego. Drugie zapytanie będzie korzystać z indeksu kolumnowego. Zostanie wykonane porównanie działania zapytania z indeksem i bez niego. Przedstawione zostaną wyniki, plany wykonania oraz napisane zostaną wnioski.
 
 ```sql
 SELECT ProductID, SUM(OrderPrice) as TotalSale
@@ -760,7 +826,15 @@ GROUP BY ProductID
 
 **Komantarz**
 
-> W przypadku wykorzystania indeksu kolumnowego, zapytanie wykonuje się znacznie szybciej, ponieważ optymalizator korzysta z indeksu, który zawiera tylko interesujące nas wartości. W przypadku zapytania, które nie korzysta z indeksu kolumnowego, czas wykonania zapytania jest dłuższy, ponieważ optymalizator musi przeszukać całą tabelę, wykonując scana tabeli, co można zaobserwować na planie wykonania zapytania. Oba plany wyglądają bardzo podobnie, jednak możemy zauważyć, koszty jakie stanowiły ich operacje. W przypadku zapytania, które korzysta z indeksu kolumnowego, 91% kosztów stanowiło `ClusteredIndex Scan`, bo `Hash Match` był już znany. W przypadku zapytania, które nie korzysta z indeksu kolumnowego, koszty się podzieiłu prawie po 50 % pomiędzy `Hash Match` a `Clustered Index Scan`, co jest spowodowane nie znajomością `Hash Match` przez optymalizator.
+> W przypadku wykorzystania indeksu kolumnowego, zapytanie wykonuje się znacznie szybciej, ponieważ optymalizator korzysta z indeksu, który zawiera tylko interesujące nas wartości. W przypadku zapytania, które nie korzysta z indeksu kolumnowego, czas wykonania zapytania jest dłuższy, ponieważ optymalizator musi przeszukać całą tabelę, wykonując jej pełny skan, co można zaobserwować na planie wykonania zapytania. W przypadku zapytania, które korzysta z indeksu kolumnowego, 91% kosztów stanowiło `ClusteredIndex Scan`, bo `Hash Match` był już znany. W przypadku zapytania, które nie korzysta z indeksu kolumnowego, koszty się podzieiłu prawie po 50 % pomiędzy `Hash Match` a `Clustered Index Scan`, co jest spowodowane nie znajomością `Hash Match` przez optymalizator.
+
+**Rekomendacja Databse Engine Tuning Advisor**
+
+![](img/ex4/recommend5.png)
+
+> Narzędzie Database Engine Tuning Advisor sugeruje utworzenie indeksu, który ma kolumnę `OrderPrice` jako INCLUDE. Dzięki temu baza danych może efektywniej wykonywać operacje agregujące, takie jak suma wartości zamówień dla określonego przedziału czasowego, bo ma szybszy dostęp do tych danych.
+
+> Wnioski: Indeks kolumnowy może znacznie usprawniść i poprawić wydajność zapytań. Doskonale nadaje się on do zapytań analitycznych, które wymagają szybkiego dostępu do dużej ilości danych i obliczeń agregujących.
 
 ### Próbnie
 
