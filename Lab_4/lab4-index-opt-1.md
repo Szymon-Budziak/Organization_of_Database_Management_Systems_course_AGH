@@ -164,7 +164,9 @@ Zapytanie 1 nie zwraca żadnych wyników przez filtrację po dacie. Celem zapyta
 
 ![](img/ex1/query1-2.png)
 
-Potencjalną optymalizacją takiego zapytania byłoby stworzenie indeksu na tabeli salesorderdetail lub nawet na obu tabelach by uniknąć skanów. Oba indeksy powinny zawierać klucz użyty w operacji join - `salesorderid`
+*Optymalizacja*
+
+Potencjalną optymalizacją takiego zapytania byłoby stworzenie indeksu na tabeli salesorderdetail lub nawet na obu tabelach by uniknąć skanów. Oba indeksy powinny zawierać klucz użyty w operacji join - `salesorderid`.
 
 ### Zapytanie 2.
 
@@ -196,7 +198,9 @@ Czas wykonania zapytania jest dość długi, bo wynosi 30 sekund. Analizując pl
 
 ![](img/ex1/query2-2.png)
 
-Takie zapytanie można by zoptymalizować indeksem na salesorderheader. Ważne by taki indeks zawierał pozycje użyte w zapytaniu - `orderdate`, `productid`, `orderqty`, `unitpricediscount`, `linetotal`
+*Optymalizacja*
+
+Takie zapytanie można by zoptymalizować indeksem na salesorderheader. Ważne by taki indeks zawierał pozycje użyte w zapytaniu - `orderdate`, `productid`, `orderqty`, `unitpricediscount`, `linetotal`.
 
 ### Zapytanie 3.
 
@@ -209,8 +213,7 @@ where orderdate in ('2008-06-01','2008-06-02', '2008-06-03', '2008-06-04', '2008
 go
 ```
 
-Kolejne zapytanie również filtruje datę tak, że w wyniku nie dostajemy żadnych rekordów. Wynik jest podobny do wyniku z zapytania 
-pierwszego. Tym razem dostępne 4 daty zamówienia oraz zwracamy tylko numer zamówienia i kupna, oraz pola duedate i shipdate
+Kolejne zapytanie również filtruje datę tak, że w wyniku nie dostajemy żadnych rekordów. Wynik jest podobny do wyniku z zapytania pierwszego. Tym razem dostępne 4 daty zamówienia oraz zwracamy tylko numer zamówienia i kupna, oraz pola duedate i shipdate.
 
 Ma bardzo prosty plan wykonania, jednak tak jak w 1 zapytaniu wykonuje ono kosztowny skan całej tabel:
 
@@ -222,7 +225,9 @@ Ma bardzo prosty plan wykonania, jednak tak jak w 1 zapytaniu wykonuje ono koszt
 
 ![](img/ex1/query3-2.png)
 
-Przez analogię do zapytania pierwszego moglibyśmy zoptymalizować zapytanie dodając do niego indeks na obu tabelach jednak należy uważać by uwzględnił on użyte kolumny dla salesorderheader - `salesordernumber`, `purchaseordernumber`, `duedate`, `shipdate`
+*Optymalizacja*
+
+Przez analogię do zapytania pierwszego moglibyśmy zoptymalizować zapytanie dodając do niego indeks na obu tabelach jednak należy uważać by uwzględnił on użyte kolumny dla salesorderheader - `salesordernumber`, `purchaseordernumber`, `duedate`, `shipdate`.
 
 ### Zapytanie 4.
 
@@ -252,6 +257,8 @@ Plan wykonania zapytania wygląda następująco
 *Plan i czas wykonania*
 
 ![](img/ex1/query4-2.png)
+
+*Optymalizacja*
 
 To zapytanie mogłoby zostać zoptymalizowane przez dodanie indeksów które trzymają już posortowane wartości `salesorderid`. Pozwoliłoby to na uniknięcie sortowania widocznego na planie wykonania zapytania.
 
@@ -428,7 +435,7 @@ Opisz, dlaczego dane indeksy zostały zaproponowane do zapytań:
 
 > Wyniki: Indeksy zostały zaproponowane by zoptymalizować czas wykonywania zapytań. Użycie indeksu pozwala na ograniczenie liczby operacji do wykonania przy przeszukiwaniu danych w tabelach.
 
-> Na tabeli salesorderdetail tworzone są 4 indeksy: Dwa pierwsze z nich mapują ID odpowiednio sprzedaży oraz produktu na kolumny z tabeli. Pozwala to na szybkie wydobycie wartości tych kolumn na podstawie wartości ID
+> Na tabeli salesorderdetail tworzone są 4 indeksy: Dwa pierwsze z nich mapują ID odpowiednio sprzedaży oraz produktu na kolumny z tabeli. Pozwala to na szybkie wydobycie wartości tych kolumn na podstawie wartości ID.
 > Kolejny indeks sortuje wartości ID sprzedaży oraz numeru przewozowego. Pozwala to na szybkie otrzymanie uszeregowanych wartości i tym samym łatwe zdobywanie informacji o poszczególnych dostawach.
 ```sql
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderdetail_8_917578307__K1_2_3_4_5_6_7_8_9_10_11] ON [dbo].[salesorderdetail]
@@ -477,7 +484,7 @@ go
 > Pozostałe trzy indeksy są tworzone dla salesorderheader. Podobnie jak w poprzednim przypadku tworzymy mapowanie sortowanej daty i ID zamówienia do pozostałych kolumn.
 > Tworzony jest też indeks mapujący ID zamówienia na 4 kolumny osobno. Zawierają one pozostałe informacje o datach istotnych dla zamówienia oraz numery sprzedaży i kupna.
 > Ostatni indeks to sortowane ID sprzedaży oraz data zamówienia. 
-> Te trzy indeksy optymalizują zapytania uwzględniające tabelę salesorderheader
+> Te trzy indeksy optymalizują zapytania uwzględniające tabelę salesorderheader.
 
 ```sql
 CREATE NONCLUSTERED INDEX [_dta_index_salesorderheader_8_901578250__K3_K1_2_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21_22_23_24_25_26] ON [dbo].[salesorderheader]
@@ -531,7 +538,7 @@ WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
 go
 ```
 
-Zaproponowane indeksy zgadzają się z naszymi propozycjami z zadania 1
+> Zaproponowane indeksy zgadzają się z naszymi propozycjami z zadania 1!
 
 ---
 
@@ -561,7 +568,7 @@ Sprawdź jak zmieniły się Execution Plany. Opisz zmiany:
 
 ![](img/ex2/query1-2.png)
 
-> Mozemy zaobserwowac, ze cały koszt wykonania jest teraz rozłożony pomiędzy wyszukiwaniem w dwóch indeksach a zamaist hash match-owania, inner join jest przeprowadzany przy pomocy zagnieżdżonych pętli.
+> Moemy zaobserwować, ze cały koszt wykonania jest teraz rozłożony pomiędzy wyszukiwaniem w dwóch indeksach a zamaist hash match-owania, inner join jest przeprowadzany przy pomocy zagnieżdżonych pętli.
 > Uzyskujemy potencjalną optymalizację. Index Seek sprawdza jedynie 4 elementy.
 
 ### Zapytanie 2.
@@ -611,7 +618,7 @@ Sprawdź jak zmieniły się Execution Plany. Opisz zmiany:
 ![](img/ex2/query3-2.png)
 
 > W tym przykładzie join jest obsługiwany poprzez zagnieżdżone pętle, a odczyty z tabeli poprzez Index Seek. 
-> Wyszukiwanie, nie skanowanie jak w poprzednich przypadkach.
+> Wyszukiwanie, nie skanowanie jest wykonywane, tak jak w poprzednich przypadkach.
 
 ### Zapytanie 4.
 
@@ -674,9 +681,9 @@ Jakie są według Ciebie najważniejsze pola?
 
 ---
 
-> Pola które dają najwięcej informacji o indeksach to zdecydowanie avg_page_Space_used_in_percent, record_count oraz avg_record_size_in_bytes
-> avg_page_space_used_in_percent określa efektywność zaalokowanej pamięci
-> avg_fragmentation_in_percent oznacza jak bardzo fragmentowane są dane. Im bardziej tym gorzej. Fizyczna tabela ciągła jest optymalna.
+> Pola które dają najwięcej informacji o indeksach to zdecydowanie `avg_page_Space_used_in_percent`, `record_count` oraz `avg_record_size_in_bytes`
+> `avg_page_space_used_in_percent` określa efektywność zaalokowanej pamięci
+> `avg_fragmentation_in_percent` oznacza jak bardzo fragmentowane są dane. Im bardziej tym gorzej. Fizyczna tabela ciągła jest optymalna.
 > Dodatkowo index_type_desc opisuje rodzaj indeksu co również jest istotną informacją.
 
 ---
@@ -703,8 +710,8 @@ and index_id not in (0) --only clustered and nonclustered indexes
 
 ---
 
-> Wyniki: Niektóre tabele trzeba zoptymalizować. Kryteria zmiany to indeksy o fragmentacji pomiędzy 10 a 15 %, średnie wykorzystanie strony między 60 a 75%, dla indeksów o więcej niż 8 stronach.
-> Jeśli indeksy spełniają te warunki to są odfiltrowane i zwrócone. Oznacza to, że właśnie te indeksy chcemy zmodyfikować 
+> Wyniki: Niektóre tabele trzeba zoptymalizować. Kryteria zmiany to indeksy o fragmentacji pomiędzy 10% a 15%, średnie wykorzystanie strony między 60 a 75%, dla indeksów o więcej niż 8 stronach.
+> Jeśli indeksy spełniają te warunki to są odfiltrowane i zwrócone. Oznacza to, że właśnie te indeksy chcemy zmodyfikować.
 
 > zrzut ekranu/komentarz:
 
@@ -735,7 +742,7 @@ and index_id not in (0) --only clustered and nonclustered indexes
 ---
 
 > Wyniki: Wcześniej odfiltrowaliśmy indeksy które warto przebudować. Teraz znajdujemy indeksy najgorsze. Te które koniecznie należy przebudować
-> Tak jak poprzednio patrzymy tylko na indeksy o więcej niż 8 stronach. Tym razem wybieramy te indeksy których fragmentacja przekracza 15% albo wykorzystanie strony jest mniejsze niż 60%
+> Tak jak poprzednio patrzymy tylko na indeksy o więcej niż 8 stronach. Tym razem wybieramy te indeksy których fragmentacja przekracza 15% albo wykorzystanie strony jest mniejsze niż 60%.
 
 > zrzut ekranu/komentarz:
 
@@ -841,6 +848,8 @@ Celem kolejnego zadania jest zapoznanie się z fizyczną budową strony indeksu
 
 Wypisz wszystkie strony które są zaalokowane dla indeksu w tabeli. Użyj do tego komendy np.:
 
+*Indeks 1*
+
 ```sql
 dbcc ind ('adventureworks2017', 'person.address', 1)
 -- '1' oznacza nr indeksu
@@ -887,6 +896,8 @@ W wyniku dostajemy identyfikator stron oraz informacje o buforze i nagłówku.
 ![](img/ex4/6.png)
 
 Informacje stron ewidentnie różnią się w zależności od typu. Dla strony `13720` pojawiły się kolumny danych i opis slotów i kolumn a na dwóch pozostałych opis bufora i nagłówka strony.
+
+*Indeks 2*
 
 Sprawdziliśmy jeszcze stronę dla indeksu 2. Strona o numerze `5872` i typie 2.
 
