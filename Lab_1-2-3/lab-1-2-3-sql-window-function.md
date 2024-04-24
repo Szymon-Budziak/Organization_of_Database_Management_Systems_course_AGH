@@ -857,9 +857,9 @@ select productid,
 from products;
 ```
 
-| MS SQL                    |
-| ------------------------- |
-| ![](./img/ex8/mysql1.png) |
+Spróbuj uzyskać ten sam wynik bez użycia funkcji okna.
+
+Wykonanie bez funkcji okna.
 
 ```sql
 SELECT
@@ -881,11 +881,13 @@ FROM
 ORDER BY p1.categoryid, rowno;
 ```
 
+Udało się uzyskać wyniki zgadzające się.
+
 | MS SQL                    |
 | ------------------------- |
 | ![](./img/ex8/mysql1.png) |
 
-> Widać zasadniczą różnicę działania dla kolumny `rowno` zwiększanie wartość musiałaby rosnąć dla zbioru produktów o tej samej cenie. Podzapytania róznią się dla takich samych wartości w kolumnie.
+
 
 > `row_number` sortuje po unit price i numeruje wiersze.
 
@@ -893,28 +895,7 @@ ORDER BY p1.categoryid, rowno;
 
 > `dense_rank` sortuje po unit price i przypisuje równe wartości dla tych samych cen, ale nie ma przerw w numeracji.
 
-Spróbuj uzyskać ten sam wynik bez użycia funkcji okna:
-
-```sql
-SELECT
-    p1.productid,
-    p1.productname,
-    p1.unitprice,
-    p1.categoryid,
-    (SELECT COUNT(*) + 1
-     FROM products p2
-     WHERE p2.categoryid = p1.categoryid AND p2.unitprice > p1.unitprice) as rowno,
-    (SELECT COUNT(DISTINCT p3.unitprice) + 1
-     FROM products p3
-     WHERE p3.categoryid = p1.categoryid AND p3.unitprice > p1.unitprice) as rankprice,
-    (SELECT COUNT(DISTINCT p4.unitprice) + 1
-     FROM products p4
-     WHERE p4.categoryid = p1.categoryid AND p4.unitprice > p1.unitprice) as denserankprice
-FROM products p1
-ORDER BY p1.categoryid, rowno;
-```
-
-> To zapytanie wykorzystuje podzapytania do zliczenia liczby produktów w tej samej kategorii o wyższej cenie jednostkowej, co skutecznie klasyfikuje produkty. Należy pamiętać, że to podejście może być znacznie wolniejsze niż używanie funkcji okna, zwłaszcza w przypadku dużych zbiorów danych.
+> Do wykonania zapytania bez funkcji okna wykorzystano podzapytania do zliczenia liczby produktów w tej samej kategorii o wyższej cenie jednostkowej, co skutecznie klasyfikuje produkty. Należy pamiętać, że to podejście może być znacznie wolniejsze niż używanie funkcji okna, zwłaszcza w przypadku dużych zbiorów danych.
 
 ---
 
