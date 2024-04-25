@@ -214,7 +214,7 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 
 ![w:700](./img/ex3/window-3.png)
 
-** Porównanie dla MS SQL**
+**Porównanie dla MS SQL**
 
 | Zapytanie       | MS SQL                     |
 |-----------------|----------------------------|
@@ -223,19 +223,17 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 | Join poprawiony | ![](./img/ex3/mssql/3.png) |
 | Funkcja okna    | ![](./img/ex3/mssql/4.png) |
 
-Plany zapytania zawierają informacje o czasie. Wszystkie 4 zapytania wykonują się podobnie szybko.
-
-SSMS pokazywał dla wszystkich z nich czas równy 0:01
+> Plany zapytania zawierają informacje o czasie. Wszystkie 4 zapytania wykonują się podobnie szybko. SSMS pokazywał dla wszystkich z nich czas równy 00:00:01 s.
 
 ![](./img/ex3/mssql/time.png)
 
-Możemy zauważyć, że zapytanie z życiem podzapytania, większość kosztu utrzymuje w węzłach reprezentujących skan indeksu - po 47% dla obu skanów. Użycie joina dalej utrzymało podobny koszt w skanie indeksu ale pozwoloło uniknąć jednej operacji obliczania skalara. 
+> Możemy zauważyć, że zapytanie z użyciem podzapytania, większość kosztu utrzymuje w węzłach reprezentujących skan indeksu - po 47% dla obu skanów. Użycie joina dalej utrzymało podobny koszt w skanie indeksu ale pozwoloło uniknąć jednej operacji obliczania skalara. 
 
-W poprzedniej wersji sprawozdania wysłaliśmy joina który właśnie tak działał. Zgodnie z sugestią z raportu postanowiliśmy go poprawić tym razem najpierw obliczając tabelę ze średnią wartością cen i potem przeprowadzając cross join. W ten sposó ograniczyliśmy liczbę agregacji strumieni.
+> W poprzedniej wersji sprawozdania wysłaliśmy joina który właśnie tak działał. Zgodnie z sugestią z raportu postanowiliśmy go poprawić tym razem najpierw obliczając tabelę ze średnią wartością cen i potem przeprowadzając cross join. W ten sposó ograniczyliśmy liczbę agregacji strumieni.
 
-W ostatnim planie zapytania możemy zauważyć optymalizację. Użcie funkcji okna pozwala pozbyć się jednego ze skanów indeksów i zamiast tego użycie operacji Table Spool która używa raz obliczonych wartości które są przechowywane w tymczasowej tabeli. W ten sposó ograniczamy się do jednego skanu tabeli. Wszystkie zapytania wykonują się w podobnym krótkim czasie rzędu kilku milisekund.
+> W ostatnim planie zapytania możemy zauważyć optymalizację. Użcie funkcji okna pozwala pozbyć się jednego ze skanów indeksów i zamiast tego użycie operacji Table Spool która używa raz obliczonych wartości które są przechowywane w tymczasowej tabeli. W ten sposó ograniczamy się do jednego skanu tabeli. Wszystkie zapytania wykonują się w podobnym krótkim czasie rzędu kilku milisekund.
 
-** Porównanie dla Postgres**
+**Porównanie dla Postgres**
 
 | Zapytanie       | Postgres                      | Czase                           |
 |-----------------|-------------------------------|---------------------------------|
@@ -244,11 +242,11 @@ W ostatnim planie zapytania możemy zauważyć optymalizację. Użcie funkcji ok
 | Join poprawiony | ![](./img/ex3/postgres/3.png) | ![](./img/ex3/postgres/3-2.png) |
 | Funkcja okna    | ![](./img/ex3/postgres/4.png) | ![](./img/ex3/postgres/4-2.png) |
 
-Dla Postgres-a widzimy zasadniczą różnicę. Czas wykonania nie ma jednostki a koszt jest liczbą a nie procentem rozłożenia kosztu między operacjami składającymi się na zapytanie. Sprawia to, że nie możemy porównać jakości odpowiednich zapytań w jasny sposób z MS SQL. Za to możemy porównać różne zapytania między sobą w obrębie Postgres-a. Czas mierzony przez IDE nie wydaje się być współmierny do wartości z planu zapytania. Można z tąd wywnioskować, że nie jest on pewnym wyznacznikiem jakości zapytania.
+> Dla Postgres-a widzimy zasadniczą różnicę. Czas wykonania nie ma jednostki a koszt jest liczbą a nie procentem rozłożenia kosztu między operacjami składającymi się na zapytanie. Sprawia to, że nie możemy porównać jakości odpowiednich zapytań w jasny sposób z MS SQL. Za to możemy porównać różne zapytania między sobą w obrębie Postgres-a. Czas mierzony przez IDE nie wydaje się być współmierny do wartości z planu zapytania. Można z tąd wywnioskować, że nie jest on pewnym wyznacznikiem jakości zapytania.
 
-Dla pierwszych trzech zapytań (podzapytania i 2 funkcji join) a użycie funkcji okna używa tylko jednego. Tutaj już widzimy zasadniczą różnicę między joinami. Koszt dla niepoprawnego joina jest około 20 razy większy niż dla poprawionego w operacji agregacji. Wartość czasu również jest dużo większa dla niepoprawnego joina.  
+> Dla pierwszych trzech zapytań (podzapytania i 2 funkcji join) a użycie funkcji okna używa tylko jednego. Tutaj już widzimy zasadniczą różnicę między joinami. Koszt dla niepoprawnego joina jest około 20 razy większy niż dla poprawionego w operacji agregacji. Wartość czasu również jest dużo większa dla niepoprawnego joina.  
 
-** Porównanie dla SQLite**
+**Porównanie dla SQLite**
 
 | Zapytanie       | SQLite                      | Czas wykonania                |
 |-----------------|-----------------------------|-------------------------------|
@@ -257,9 +255,9 @@ Dla pierwszych trzech zapytań (podzapytania i 2 funkcji join) a użycie funkcji
 | Join poprawiony | ![](./img/ex3/sqlite/3.png) | ![](./img/ex3/sqlite/3-2.png) |
 | Funkcja okna    | ![](./img/ex3/sqlite/4.png) | ![](./img/ex3/sqlite/4-2.png) |
 
-Sqlite nie daje możliwości stworzenia precyzyjnego planu który pokazał by wartość czasu wykonania. Musimy użyć wbudowanego pomiaru czasu IDE.
+> Sqlite nie daje możliwości stworzenia precyzyjnego planu który pokazał by wartość czasu wykonania. Musimy użyć wbudowanego pomiaru czasu IDE.
 
-Porównując między sobą czas wykonania zapytań pomiędzy SZBD nie zauważamy widocznych różnic w jakości.
+> Porównując między sobą czas wykonania zapytań pomiędzy SZBD nie zauważamy widocznych różnic w jakości.
 
 ---
 
@@ -339,7 +337,7 @@ Porównaj zapytania. Porównaj czasy oraz plany wykonania zapytań. Przetestuj d
 | Join         | ![](img/ex4/mssql/mysql2time.png) | ![](img/ex4/postgres/postgres2time.png) | ![](img/ex4/sqlite/sqlite2time.png) |
 | Funkcja okna | ![](img/ex4/mssql/mysql3time.png) | ![](img/ex4/postgres/postgres3time.png) | ![](img/ex4/sqlite/sqlite3time.png) |
 
-Dla MS SQL czas jest rzędu mniej niż 10ms. POomiar z IDE w pozosałych SZBD jest wolniejszy. Postgres najgorzej radzi sobie z zapytaniem 2 a SQLite z pierwszym.
+> Dla MS SQL czas jest rzędu mniej niż 10ms. Poomiar z IDE w pozosałych SZBD jest wolniejszy. Postgres najgorzej radzi sobie z zapytaniem 2 a SQLite z pierwszym.
 
 
 **Porównanie planów wykonania**
@@ -350,12 +348,11 @@ Dla MS SQL czas jest rzędu mniej niż 10ms. POomiar z IDE w pozosałych SZBD je
 | Join         | ![](img/ex4/mssql/mysql2plan.png) | ![](img/ex4/postgres/postgres2plan.png) | ![](img/ex4/sqlite/sqlite2plan.png) |
 | Funkcja okna | ![](img/ex4/mssql/mysql3plan.png) | ![](img/ex4/postgres/postgres3plan.png) | ![](img/ex4/sqlite/sqlite3plan.png) |
 
-Pomimo różnic pomiędzy 2 i 3 zapytaniem dały one taki sam plan wykonania dla MS SQL. Wygląda na to, że optymalizator sprowadza zapytania do takiej samej logiki przetwarzania. W 2 i 3 zapytaniu przeprowadzany jest tylko 1 skan tabeli. w pierwszym aż dwa, mimo że użyta jest operacja Table Spool. 
+> Pomimo różnic pomiędzy 2 i 3 zapytaniem dały one taki sam plan wykonania dla MS SQL. Wygląda na to, że optymalizator sprowadza zapytania do takiej samej logiki przetwarzania. W 2 i 3 zapytaniu przeprowadzany jest tylko 1 skan tabeli. w pierwszym aż dwa, mimo że użyta jest operacja Table Spool. 
 
-Dla Postgres plany te są już różne! W każdym kolejnym zapytaniu zmniejszamy liczbę pełnych skanów tabeli products. aż do 1.
+> Dla Postgres plany te są już różne! W każdym kolejnym zapytaniu zmniejszamy liczbę pełnych skanów tabeli products, aż do 1.
 
-Dla SQLite pierwsze zapytanie wykonuje 2 skany indeksu i jeden skan tabeli, drugie z joinem wykonuje eden skan tabeli i jeden indeks skan a trzecie tylko indeks skan i full skan tabeli AvgPrices zdefiniowanej jako zapytanie z użyciem `WITH`.
-
+> Dla SQLite pierwsze zapytanie wykonuje 2 skany indeksu i jeden skan tabeli, drugie z joinem wykonuje jeden skan tabeli i jeden indeks skan a trzecie tylko indeks skan i full skan tabeli AvgPrices zdefiniowanej jako zapytanie z użyciem `WITH`.
 
 
 ---
@@ -561,7 +558,7 @@ Porównaj zapytania. Porównaj czasy oraz plany wykonania zapytań. Przetestuj d
 | Postgres | ![](./img/ex6/postgres/result.png) |  
 | SQLite   | ![](./img/ex6/sqlite/result.png)   | 
 
-Udało się dla wszystkich zapytań uzyskać ten sam wynik. By to osiągnąć, dodaliśmy sortowanie po ID produktu i cenie. Dzięki temu uzyskaliśmy pewność, że dla poprawnych zapytań w obrębie danej bazy danych tabele będą takie same.
+> Udało się dla wszystkich zapytań uzyskać ten sam wynik. By to osiągnąć, dodaliśmy sortowanie po ID produktu i cenie. Dzięki temu uzyskaliśmy pewność, że dla poprawnych zapytań w obrębie danej bazy danych tabele będą takie same.
 
 
 
@@ -573,9 +570,9 @@ Udało się dla wszystkich zapytań uzyskać ten sam wynik. By to osiągnąć, d
 | Join         | ![](img/ex6/mssql/mysql2time.png) | ![](img/ex6/postgres/postgres2time.png) | ![](img/ex6/sqlite/sqlite2time.png) |
 | Funkcja okna | ![](img/ex6/mssql/mysql3time.png) | ![](img/ex6/postgres/postgres3time.png) | ![](img/ex6/sqlite/sqlite3time.png) |
 
- Możemy zaobserwować, że zapytanie z użyciem podzapytania dla postgres nie wykonało się nawet po 5 minutach od wywołania. Dla SQLite również nie uzyskaliśmy wyniku po około 5 minutach. Jednym z pomysłow, było możliwe zawieszenie się bazy. Jednak, po testowym sprawdzeniu połączenia prostym zapytaniem, zakończyło się ono suckecem co świadczyło o poprawnym działaniu bazy, a problemem było mało efektywne działanie podzapytania w takim zapytaniu. Trochę lepiej poradziło sobie zapytanie z joinem a najlepiej z funkcją okna.
+ > Możemy zaobserwować, że zapytanie z użyciem podzapytania dla postgres nie wykonało się nawet po 5 minutach od wywołania. Dla SQLite również nie uzyskaliśmy wyniku po około 5 minutach. Jednym z pomysłow, było możliwe zawieszenie się bazy. Jednak, po testowym sprawdzeniu połączenia prostym zapytaniem, zakończyło się ono suckecem co świadczyło o poprawnym działaniu bazy, a problemem było mało efektywne działanie podzapytania w takim zapytaniu. Trochę lepiej poradziło sobie zapytanie z joinem a najlepiej z funkcją okna.
 
-Dla MS SQL czasy były dłuższe dla zapytań, które dla pozostałych SZBD się wykonały, jednak zapytanie 1 wykonało się w porównywalnym czasie do pozostałych zapytań. Można wnioskować, że dzięki odpowiednim optymalizacjom MS SQL lepiej radzi sobie z optymalizacją pewnych zapytań.
+> Dla MS SQL czasy były dłuższe dla zapytań, które dla pozostałych SZBD się wykonały, jednak zapytanie 1 wykonało się w porównywalnym czasie do pozostałych zapytań. Można wnioskować, że dzięki odpowiednim optymalizacjom MS SQL lepiej radzi sobie z optymalizacją pewnych zapytań.
 
 **Porównanie planów wykonania**
 
@@ -585,13 +582,13 @@ Dla MS SQL czasy były dłuższe dla zapytań, które dla pozostałych SZBD się
 | Join         | ![](./img/ex6/mssql/plan2.png) | ![](./img/ex6/postgres/plan2.png) | ![](./img/ex6/sqlite/plan2.png) |
 | Funkcja okna | ![](./img/ex6/mssql/plan3.png) | ![](./img/ex6/postgres/plan3.png) | ![](./img/ex6/sqlite/plan3.png) |
 
-Dla Postgresa musieliśmy wygenerować plan przy pomocy funkcjonalności "Explain Plan" zamiast "Explain Analyse", gdyż ta druga wymaga uruchomienia i wykonania zapytania
+> Dla Postgresa musieliśmy wygenerować plan przy pomocy funkcjonalności "Explain Plan" zamiast "Explain Analyse", gdyż ta druga wymaga uruchomienia i wykonania zapytania
 
-Dla MS SQL róznica między 1 i drugim zapytaniem jest bardzo prosta i polega na uniknięciu dodatkowej operacji compute scalar przez późniejsze łączenie tabel. Zapytanie trzecie jest optymalizowane przez pominięcie jednego ze skanów indeksów. Zato ma 2 węzły sortowania w planie wykonania.
+> Dla MS SQL róznica między 1 i drugim zapytaniem jest bardzo prosta i polega na uniknięciu dodatkowej operacji compute scalar przez późniejsze łączenie tabel. Zapytanie trzecie jest optymalizowane przez pominięcie jednego ze skanów indeksów, za to ma 2 węzły sortowania w planie wykonania.
 
-Dla Postgresa pierwsze zapytanie wykonuje potrójny full scan tabeli. Może być to powodem powolnego działania. Drugie i trzecie zapytanie wykonują odpowiednio po 2 i 1 skanie oraz nie agregują ich w sposób w jaki robi to zapytanie 1. Znacznie przyspiesza to czas działania.
+> Dla Postgresa pierwsze zapytanie wykonuje potrójny full scan tabeli. Może być to powodem powolnego działania. Drugie i trzecie zapytanie wykonują odpowiednio po 2 i 1 skanie oraz nie agregują ich w sposób w jaki robi to zapytanie 1. Znacznie przyspiesza to czas działania.
 
-Dla Sqlite pierwsze zpaytanie wykonuje 3 full skany, drugie za to jeden z nich zastępuje skanem indeksu w utworzonej tabeli classes. 3 zapytanie wykonuje tylko jeden pełny skan na wejściowej tabeli danych. 
+> Dla Sqlite pierwsze zpaytanie wykonuje 3 full skany, drugie za to jeden z nich zastępuje skanem indeksu w utworzonej tabeli classes. 3 zapytanie wykonuje tylko jeden pełny skan na wejściowej tabeli danych. 
 
 ---
 
@@ -794,7 +791,7 @@ WINDOW w AS (partition by ph.categoryid),
 
 **Wyniki**
 
-Tylko dla zapytania 3 wszystkie 3 SZBD dały wyniki w rozsądnym czasie. Dla zapytania 2 z joinami nie było żadnego wyniku w dobrym czasie, a dla 1 zapytania dostaliśmy wyniki tylko dla MS SQL.
+> Tylko dla zapytania 3 wszystkie 3 SZBD dały wyniki w rozsądnym czasie. Dla zapytania 2 z joinami nie było żadnego wyniku w dobrym czasie, a dla 1 zapytania dostaliśmy wyniki tylko dla MS SQL.
 
 Wyniki dla MS SQL w zapytaniu 1
 ![](./img/ex7/mssql/result1.png)
@@ -805,7 +802,7 @@ Wyniki dla MS SQL w zapytaniu 1
 | Postgres | ![](./img/ex7/postgres/results3.png) |
 | SQLite   | ![](./img/ex7/sqlite/results3.png)   |
 
-Widzimy, że dla 3 zapytania wyniki są posortowane względem id produktu a nie id tak jak to ma miejsce w zapytaniu 1.
+> Widzimy, że dla 3 zapytania wyniki są posortowane względem id produktu a nie id tak jak to ma miejsce w zapytaniu 1.
 
 ---
 
@@ -819,7 +816,7 @@ Porównaj czasy oraz plany wykonania zapytań. Przetestuj działanie w różnych
 | Join         | ![](./img/ex7/mssql/time2.png) | ![](img/ex7/postgres/time2.png) | ![](img/ex7/sqlite/time2.png) |
 | Funkcja okna | ![](./img/ex7/mssql/time3.png) | ![](img/ex7/postgres/time3.png) | ![](img/ex7/sqlite/time3.png) |
 
-Jak widać czasy dla joina, oraz dla podzapytania w Postgres i SQLite są zbyt długie. Można by się pokusić o stwierdzenie, że czas dla MS SQL również jest bardzo długi. Widzimy, że dla ostatniego zapytania MS SQL też nie radzi sobie najlepiej kiedy Postgres i SQLite wykonują je w nieco ponad 10 sekund ewidentnie radząc sobie lepiej.
+> Jak widać czasy dla joina, oraz dla podzapytania w Postgres i SQLite są zbyt długie. Można by się pokusić o stwierdzenie, że czas dla MS SQL również jest bardzo długi. Widzimy, że dla ostatniego zapytania MS SQL też nie radzi sobie najlepiej, bo wykonuje je w 2:47 minuty, kiedy Postgres i SQLite wykonują je w nieco ponad 10 sekund ewidentnie radząc sobie lepiej.
 
 **Porównanie planów wykonania**
 
@@ -829,11 +826,11 @@ Jak widać czasy dla joina, oraz dla podzapytania w Postgres i SQLite są zbyt d
 | Join         | ![](./img/ex7/mssql/plan2.png) | ![](./img/ex7/postgres/plan2.png) | ![](./img/ex7/sqlite/plan2.png) |
 | Funkcja okna | ![](./img/ex7/mssql/plan3.png) | ![](./img/ex7/postgres/plan3.png) | ![](./img/ex7/sqlite/plan3.png) |
 
-Dla MS SQL pierwsze zapytanie wykonuje 4 skany indeksu a dodatkowo 6 operacji hash match. Jest to nieoptymalne. Dla Joina plan tworzy dużo mniej rozbudowane drzewo niż w pierwszym przypadku, jednak nie oznacza to optymalizacji. Praktycznie cały koszt zapytania jest zawarty w skanie indeksu i obliczeniu skalarów. Dopiero użycie funkcji okna pozwala na użycie tylko jednego skanu indeksu, ale dalej zapytanie zajmuje dużo czasu.
+> Dla MS SQL pierwsze zapytanie wykonuje 4 skany indeksu a dodatkowo 6 operacji hash match. Jest to nieoptymalne. Dla Joina plan tworzy dużo mniej rozbudowane drzewo niż w pierwszym przypadku, jednak nie oznacza to optymalizacji. Praktycznie cały koszt zapytania jest zawarty w skanie indeksu i obliczeniu skalarów. Dopiero użycie funkcji okna pozwala na użycie tylko jednego skanu indeksu, ale dalej zapytanie zajmuje dużo czasu.
 
-Dla Postgresa pierwsze zapytanie wykonuje 4 skany tabeli i 3 agregacje. Przez takie kosztowne operacje zapytanie wykonuje się długo. Użycie joinów zdecydowanie rozbudowuje plan zapytania, co jednak nie przyspiesza go. Wykonywane są duże agregacje, hash joiny i sortowania. Dla funkcji okna uzyskujemy prosty plan z 2 sortowaniami i 2 operacjiami transformacji co przekłada się na sprawne działanie. PLan jest bardzo podobny do tego dla MS SQL poza kilkoma drobnymi operacjami, które są na pominięte. 
+> Dla Postgresa pierwsze zapytanie wykonuje 4 skany tabeli i 3 agregacje. Przez takie kosztowne operacje zapytanie wykonuje się długo. Użycie joinów zdecydowanie rozbudowuje plan zapytania, co jednak nie przyspiesza go. Wykonywane są duże agregacje, hash joiny i sortowania. Dla funkcji okna uzyskujemy prosty plan z 2 sortowaniami i 2 operacjiami transformacji co przekłada się na sprawne działanie. PLan jest bardzo podobny do tego dla MS SQL poza kilkoma drobnymi operacjami, które są na pominięte. 
 
-Dla SQLite, z planu pierwszego możemy wywnioskować, że użyte są 3 zapytania które obejmują skany tabel. Dodatkowo użyty jest jeszcze jeden skan product history. Poza tym nie mamy informacji o tym, jak dane są agregowane. Dla joinów można zauważyć użycie indeksów i jednego pełnego skanu. 2 węzły w planie są jednak niestety nierozpoznane przez program. Dla trzeciego planu widzimy tylko jeden skan tabeli. Pozostałe dwa to skany podzapytania. Jest to też jedyne zapytanie które dla SQLite wykonało się w sensownym czasie. Możemy wnioskować, że bardzo czasochłonną operacją jest właśnie skan tabeli.
+> Dla SQLite, z planu pierwszego możemy wywnioskować, że użyte są 3 zapytania które obejmują skany tabel. Dodatkowo użyty jest jeszcze jeden skan product history. Poza tym nie mamy informacji o tym, jak dane są agregowane. Dla joinów można zauważyć użycie indeksów i jednego pełnego skanu. 2 węzły w planie są jednak niestety nierozpoznane przez program. Dla trzeciego planu widzimy tylko jeden skan tabeli. Pozostałe dwa to skany podzapytania. Jest to też jedyne zapytanie które dla SQLite wykonało się w sensownym czasie. Możemy wnioskować, że bardzo czasochłonną operacją jest właśnie skan tabeli.
 
 ---
 
@@ -889,11 +886,11 @@ Udało się uzyskać wyniki zgadzające się.
 
 
 
-> `row_number` sortuje po unit price i numeruje wiersze.
+> `row_number` służy do nadawania numerów porządkowych wierszom zgodnie z określonym porządkiem. W tym przypadku wykonywana jest po unit price i numeruje wiersze.
 
-> `rank` sortuje po unit price i przypisuje równe wartości dla tych samych cen.
+> `rank` przypisuje numer porządkowy każdemu wierszowi tabeli, sortując je według kolumny unit price i przypisuje równe wartości dla tych samych cen. Jeśli dwa wiersze mają takie same wartości w kolumnie sortującej, to funkcja `rank` przypisze im ten sam numer porządkowy, a następny numer zostanie pominięty.
 
-> `dense_rank` sortuje po unit price i przypisuje równe wartości dla tych samych cen, ale nie ma przerw w numeracji.
+> `dense_rank` jest podobna do funkcji `rank`, ale zachowuje się nieco inaczej w przypadku wierszy o takich samych wartościach w polu sortującym. W przypadku wierszy o takich samych wartościach w polu sortującym, `dense_rank` nadaje im kolejne, nieprzerwane numery porządkowe. W tym przypadku kolumną tą jest unit price i przypisuje równe wartości dla tych samych cen, ale nie ma przerw w numeracji.
 
 > Do wykonania zapytania bez funkcji okna wykorzystano podzapytania do zliczenia liczby produktów w tej samej kategorii o wyższej cenie jednostkowej, co skutecznie klasyfikuje produkty. Należy pamiętać, że to podejście może być znacznie wolniejsze niż używanie funkcji okna, zwłaszcza w przypadku dużych zbiorów danych.
 
