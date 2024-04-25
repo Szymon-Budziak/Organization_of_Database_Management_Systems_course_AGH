@@ -166,7 +166,7 @@ SELECT p.ProductID,
 FROM Products AS p
 ```
 
-- Polecenie z wykorzystaniem joina
+- Polecenie z wykorzystaniem joina przed poprawą
 
 ```sql
 SELECT p.ProductID,
@@ -176,6 +176,18 @@ SELECT p.ProductID,
 FROM Products p
          CROSS JOIN Products p2
 GROUP BY p.ProductID, p.ProductName, p.UnitPrice
+```
+
+- Polecenie z wykorzystaniem joina po poprawie
+
+```sql
+SELECT p.ProductID,
+       p.ProductName,
+       p.UnitPrice,
+	   p2.avgPrice
+FROM Products p
+       CROSS JOIN (SELECT AVG(UnitPrice) as avgPrice FROM Products) p2
+GROUP BY p.ProductID, p.ProductName, p.UnitPrice, p2.avgPrice
 ```
 
 - Polecenie z wykorzystaniem funkcji okna
@@ -202,24 +214,50 @@ W DataGrip użyj opcji Explain Plan/Explain Analyze
 
 ![w:700](./img/ex3/window-3.png)
 
-**Porównanie planów wykonania**
+**Porównanie dla MS SQL**
 
-| Zapytanie    | MS SQL                    | Postgres                   | SQLite                   |
-| ------------ | ------------------------- | -------------------------- | ------------------------ |
-| Podzapytanie | ![](./img/ex3/mysql1.png) | ![](img/ex3/postgres1.png) | ![](img/ex3/sqlite1.png) |
-| Join         | ![](./img/ex3/mysql2.png) | ![](img/ex3/postgres2.png) | ![](img/ex3/sqlite2.png) |
-| Funkcja okna | ![](./img/ex3/mysql3.png) | ![](img/ex3/postgres3.png) | ![](img/ex3/sqlite3.png) |
+| Zapytanie       | MS SQL                     |
+|-----------------|----------------------------|
+| Podzapytanie    | ![](./img/ex3/mssql/1.png) |
+| Join            | ![](./img/ex3/mssql/2.png) |
+| Join poprawiony | ![](./img/ex3/mssql/3.png) |
+| Funkcja okna    | ![](./img/ex3/mssql/4.png) |
 
-**Porównanie czasów wykonania**
+> Plany zapytania zawierają informacje o czasie. Wszystkie 4 zapytania wykonują się podobnie szybko. SSMS pokazywał dla wszystkich z nich czas równy 00:00:01 s.
 
-| Zapytanie    | MS SQL                        | Postgres                       | SQLite                       |
-| ------------ | ----------------------------- | ------------------------------ | ---------------------------- |
-| Podzapytanie | ![](./img/ex3/mysql1time.png) | ![](img/ex3/postgres1time.png) | ![](img/ex3/sqlite1time.png) |
-| Join         | ![](./img/ex3/mysql2time.png) | ![](img/ex3/postgres2time.png) | ![](img/ex3/sqlite2time.png) |
-| Funkcja okna | ![](./img/ex3/mysql3time.png) | ![](img/ex3/postgres3time.png) | ![](img/ex3/sqlite3time.png) |
+![](./img/ex3/mssql/time.png)
 
-> Sqlite nie daje pełnej możliwości zwizualizowania planu. Datagrip pozwala jednak na zrobienie tego z Postgresem.
-> Ze względu na specyficzny sposób wyliczania kosztu dla każdego z SZBD nie ma sensu porównywać wyników ze względu na rodzaj SZBD. Natomiast porównując koszty ze względu na formę zapytania można zauważyć, że w przypadku zapytań dla MS SQL czasy wykonania są najszybsze, a dla PostgreSQL oraz SQLite są nieco gorsze, jednak nie sa one takie duże, aby wykonywały się w zauważalnie dłuższym czasie.
+> Możemy zauważyć, że zapytanie z użyciem podzapytania, większość kosztu utrzymuje w węzłach reprezentujących skan indeksu - po 47% dla obu skanów. Użycie joina dalej utrzymało podobny koszt w skanie indeksu ale pozwoloło uniknąć jednej operacji obliczania skalara. 
+
+> W poprzedniej wersji sprawozdania wysłaliśmy joina który właśnie tak działał. Zgodnie z sugestią z raportu postanowiliśmy go poprawić tym razem najpierw obliczając tabelę ze średnią wartością cen i potem przeprowadzając cross join. W ten sposó ograniczyliśmy liczbę agregacji strumieni.
+
+> W ostatnim planie zapytania możemy zauważyć optymalizację. Użcie funkcji okna pozwala pozbyć się jednego ze skanów indeksów i zamiast tego użycie operacji Table Spool która używa raz obliczonych wartości które są przechowywane w tymczasowej tabeli. W ten sposó ograniczamy się do jednego skanu tabeli. Wszystkie zapytania wykonują się w podobnym krótkim czasie rzędu kilku milisekund.
+
+**Porównanie dla Postgres**
+
+| Zapytanie       | Postgres                      | Czase                           |
+|-----------------|-------------------------------|---------------------------------|
+| Podzapytanie    | ![](./img/ex3/postgres/1.png) | ![](./img/ex3/postgres/1-2.png) |
+| Join            | ![](./img/ex3/postgres/2.png) | ![](./img/ex3/postgres/2-2.png) |
+| Join poprawiony | ![](./img/ex3/postgres/3.png) | ![](./img/ex3/postgres/3-2.png) |
+| Funkcja okna    | ![](./img/ex3/postgres/4.png) | ![](./img/ex3/postgres/4-2.png) |
+
+> Dla Postgres-a widzimy zasadniczą różnicę. Czas wykonania nie ma jednostki a koszt jest liczbą a nie procentem rozłożenia kosztu między operacjami składającymi się na zapytanie. Sprawia to, że nie możemy porównać jakości odpowiednich zapytań w jasny sposób z MS SQL. Za to możemy porównać różne zapytania między sobą w obrębie Postgres-a. Czas mierzony przez IDE nie wydaje się być współmierny do wartości z planu zapytania. Można z tąd wywnioskować, że nie jest on pewnym wyznacznikiem jakości zapytania.
+
+> Dla pierwszych trzech zapytań (podzapytania i 2 funkcji join) a użycie funkcji okna używa tylko jednego. Tutaj już widzimy zasadniczą różnicę między joinami. Koszt dla niepoprawnego joina jest około 20 razy większy niż dla poprawionego w operacji agregacji. Wartość czasu również jest dużo większa dla niepoprawnego joina.  
+
+**Porównanie dla SQLite**
+
+| Zapytanie       | SQLite                      | Czas wykonania                |
+|-----------------|-----------------------------|-------------------------------|
+| Podzapytanie    | ![](./img/ex3/sqlite/1.png) | ![](./img/ex3/sqlite/1-2.png) |
+| Join            | ![](./img/ex3/sqlite/2.png) | ![](./img/ex3/sqlite/2-2.png) |
+| Join poprawiony | ![](./img/ex3/sqlite/3.png) | ![](./img/ex3/sqlite/3-2.png) |
+| Funkcja okna    | ![](./img/ex3/sqlite/4.png) | ![](./img/ex3/sqlite/4-2.png) |
+
+> Sqlite nie daje możliwości stworzenia precyzyjnego planu który pokazał by wartość czasu wykonania. Musimy użyć wbudowanego pomiaru czasu IDE.
+
+> Porównując między sobą czas wykonania zapytań pomiędzy SZBD nie zauważamy widocznych różnic w jakości.
 
 ---
 
@@ -243,7 +281,7 @@ SELECT p.ProductID,
 FROM Products p
 WHERE p.UnitPrice > (SELECT AVG(p3.UnitPrice)
                      FROM Products p3
-                     WHERE p3.CategoryID = p.CategoryID)
+                     WHERE p3.CategoryID = p.CategoryID);
 ```
 
 - Polecenie z wykorzystaniem joina
@@ -259,17 +297,20 @@ GROUP BY
     p.ProductID,
     p.ProductName,
     p.UnitPrice
-HAVING p.UnitPrice > AvgCategoryPrice
+HAVING p.UnitPrice > AVG(p2.UnitPrice);
 ```
 
 - Polecenie z wykorzystaniem funkcji okna
 
 ```sql
-WITH AvgPrices AS (SELECT ProductID,
-                          ProductName,
-                          UnitPrice,
-                          AVG(UnitPrice) OVER (PARTITION BY CategoryID) AS AvgCategoryPrice
-                   FROM Products)
+WITH AvgPrices AS 
+    (SELECT 
+         ProductID,
+         ProductName,
+         UnitPrice,
+         AVG(UnitPrice) 
+            OVER (PARTITION BY CategoryID) AS AvgCategoryPrice
+    FROM Products)
 SELECT ProductID,
        ProductName,
        UnitPrice,
@@ -284,27 +325,35 @@ Porównaj zapytania. Porównaj czasy oraz plany wykonania zapytań. Przetestuj d
 
 | Zapytanie    | MS SQL                    | Postgres                   | SQLite                   |
 | ------------ | ------------------------- | -------------------------- | ------------------------ |
-| Podzapytanie | ![](./img/ex4/mysql1.png) | ![](img/ex4/postgres1.png) | ![](img/ex4/sqlite1.png) |
-| Join         | ![](./img/ex4/mysql2.png) | ![](img/ex4/postgres2.png) | ![](img/ex4/sqlite2.png) |
-| Funkcja okna | ![](./img/ex4/mysql3.png) | ![](img/ex4/postgres3.png) | ![](img/ex4/sqlite3.png) |
+| Podzapytanie | ![](img/ex4/mssql/mysql1.png) | ![](img/ex4/postgres/postgres1.png) | ![](img/ex4/sqlite/sqlite1.png) |
+| Join         | ![](img/ex4/mssql/mysql2.png) | ![](img/ex4/postgres/postgres2.png) | ![](img/ex4/sqlite/sqlite2.png) |
+| Funkcja okna | ![](img/ex4/mssql/mysql3.png) | ![](img/ex4/postgres/postgres3.png) | ![](img/ex4/sqlite/sqlite3.png) |
 
 **Porównanie czasów wykonania**
 
 | Zapytanie    | MS SQL                        | Postgres                       | SQLite                       |
 | ------------ | ----------------------------- | ------------------------------ | ---------------------------- |
-| Podzapytanie | ![](./img/ex4/mysql1time.png) | ![](img/ex4/postgres1time.png) | ![](img/ex4/sqlite1time.png) |
-| Join         | ![](./img/ex4/mysql2time.png) | ![](img/ex4/postgres2time.png) | ![](img/ex4/sqlite2time.png) |
-| Funkcja okna | ![](./img/ex4/mysql3time.png) | ![](img/ex4/postgres3time.png) | ![](img/ex4/sqlite3time.png) |
+| Podzapytanie | ![](img/ex4/mssql/mysql1time.png) | ![](img/ex4/postgres/postgres1time.png) | ![](img/ex4/sqlite/sqlite1time.png) |
+| Join         | ![](img/ex4/mssql/mysql2time.png) | ![](img/ex4/postgres/postgres2time.png) | ![](img/ex4/sqlite/sqlite2time.png) |
+| Funkcja okna | ![](img/ex4/mssql/mysql3time.png) | ![](img/ex4/postgres/postgres3time.png) | ![](img/ex4/sqlite/sqlite3time.png) |
+
+> Dla MS SQL czas jest rzędu mniej niż 10ms. Poomiar z IDE w pozosałych SZBD jest wolniejszy. Postgres najgorzej radzi sobie z zapytaniem 2 a SQLite z pierwszym.
+
 
 **Porównanie planów wykonania**
 
 | Zapytanie    | MS SQL                        | Postgres                       | SQLite                       |
 | ------------ | ----------------------------- | ------------------------------ | ---------------------------- |
-| Podzapytanie | ![](./img/ex4/mysql1plan.png) | ![](img/ex4/postgres1plan.png) | ![](img/ex4/sqlite1plan.png) |
-| Join         | ![](./img/ex4/mysql2plan.png) | ![](img/ex4/postgres2plan.png) | ![](img/ex4/sqlite2plan.png) |
-| Funkcja okna | ![](./img/ex4/mysql3plan.png) | ![](img/ex4/postgres3plan.png) | ![](img/ex4/sqlite3plan.png) |
+| Podzapytanie | ![](img/ex4/mssql/mysql1plan.png) | ![](img/ex4/postgres/postgres1plan.png) | ![](img/ex4/sqlite/sqlite1plan.png) |
+| Join         | ![](img/ex4/mssql/mysql2plan.png) | ![](img/ex4/postgres/postgres2plan.png) | ![](img/ex4/sqlite/sqlite2plan.png) |
+| Funkcja okna | ![](img/ex4/mssql/mysql3plan.png) | ![](img/ex4/postgres/postgres3plan.png) | ![](img/ex4/sqlite/sqlite3plan.png) |
 
-> Możemy zaobserwować, że operacje w przypadku PostgreSQL są liniowe oraz jest ich mniej co przekłada się na mniejszy czas wykonywania zapytań. Dla przykładu w przypadku MS SQL roaz SQLite widzimy zagnieżdżone podzapytania.
+> Pomimo różnic pomiędzy 2 i 3 zapytaniem dały one taki sam plan wykonania dla MS SQL. Wygląda na to, że optymalizator sprowadza zapytania do takiej samej logiki przetwarzania. W 2 i 3 zapytaniu przeprowadzany jest tylko 1 skan tabeli. w pierwszym aż dwa, mimo że użyta jest operacja Table Spool. 
+
+> Dla Postgres plany te są już różne! W każdym kolejnym zapytaniu zmniejszamy liczbę pełnych skanów tabeli products, aż do 1.
+
+> Dla SQLite pierwsze zapytanie wykonuje 2 skany indeksu i jeden skan tabeli, drugie z joinem wykonuje jeden skan tabeli i jeden indeks skan a trzecie tylko indeks skan i full skan tabeli AvgPrices zdefiniowanej jako zapytanie z użyciem `WITH`.
+
 
 ---
 
@@ -450,78 +499,96 @@ Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna.
 - Polecenie z wykorzystaniem podzapytania
 
 ```sql
-SELECT p.ProductID,
-	   p.ProductName,
-       p.UnitPrice,
-	   (SELECT AVG(ph.UnitPrice)
-	    FROM product_history ph
-	    WHERE ph.CategoryID = p.CategoryID) as avgprice
-FROM product_history as p
-WHERE p.UnitPrice >
-      (SELECT AVG(ph.UnitPrice)
-       FROM product_history ph
-       WHERE ph.CategoryID = p.CategoryID)
+-- 1
+WITH data as
+         (SELECT p.ProductID,
+                 p.ProductName,
+                 p.UnitPrice,
+                 (SELECT AVG(ph.UnitPrice)
+                  FROM product_history ph
+                  WHERE ph.CategoryID = p.CategoryID) as avgprice
+          FROM product_history as p)
+SELECT * FROM data
+WHERE UnitPrice > avgprice
+ORDER BY productid, unitprice;
 ```
 
 - Polecenie z wykorzystaniem joina
 
 ```sql
+-- 2
 WITH classes as
-(select categoryid, avg(unitprice) avgprice
-from product_history p
-group by categoryid)
-
+         (select categoryid, avg(unitprice) avgprice
+          from product_history p
+          group by categoryid)
 SELECT p.ProductID,
-	   p.ProductName,
+       p.ProductName,
        p.UnitPrice,
-	   classes.avgprice
+       classes.avgprice
 FROM product_history as p
-	   inner JOIN classes ON p.categoryid = classes.categoryid
+         inner JOIN classes ON p.categoryid = classes.categoryid
 WHERE p.unitprice > classes.avgprice
+ORDER BY productid, unitprice;
 ```
 
 - Polecenie z wykorzystaniem funkcji okna
 
 ```sql
+-- 3
 WITH data as
-(SELECT p.ProductID,
-       p.ProductName,
-       p.UnitPrice,
-       AVG(UnitPrice) OVER(PARTITION BY p.CategoryID) AS AveragePrice
-FROM product_history AS p)
+     (SELECT
+          p.ProductID,
+          p.ProductName,
+          p.UnitPrice,
+          AVG(p.UnitPrice) OVER (PARTITION BY p.CategoryID) AS avgprice
+      FROM
+          product_history AS p)
 SELECT * from data
-WHERE UnitPrice > AveragePrice
+WHERE UnitPrice > avgprice
+ORDER BY productid, unitprice;
 ```
 
 Porównaj zapytania. Porównaj czasy oraz plany wykonania zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
 **Wyniki**
 
-| Zapytanie    | MS SQL                    | Postgres                   | SQLite                   |
-| ------------ | ------------------------- | -------------------------- | ------------------------ |
-| Podzapytanie | ![](./img/ex6/mysql1.png) | ![](img/ex6/postgres1.png) | ![](img/ex6/sqlite1.png) |
-| Join         | ![](./img/ex6/mysql2.png) | ![](img/ex6/postgres2.png) | ![](img/ex6/sqlite2.png) |
-| Funkcja okna | ![](./img/ex6/mysql3.png) | ![](img/ex6/postgres3.png) | ![](img/ex6/sqlite3.png) |
+| SZBD     | wynik                              |
+|----------|------------------------------------|
+| MS SQL   | ![](./img/ex6/mssql/result.png)    |
+| Postgres | ![](./img/ex6/postgres/result.png) |  
+| SQLite   | ![](./img/ex6/sqlite/result.png)   | 
+
+> Udało się dla wszystkich zapytań uzyskać ten sam wynik. By to osiągnąć, dodaliśmy sortowanie po ID produktu i cenie. Dzięki temu uzyskaliśmy pewność, że dla poprawnych zapytań w obrębie danej bazy danych tabele będą takie same.
+
+
 
 **Porównanie czasów wykonania**
 
 | Zapytanie    | MS SQL                        | Postgres                       | SQLite                       |
 | ------------ | ----------------------------- | ------------------------------ | ---------------------------- |
-| Podzapytanie | ![](./img/ex6/mysql1time.png) | ![](img/ex6/postgres1time.png) | ![](img/ex6/sqlite1time.png) |
-| Join         | ![](./img/ex6/mysql2time.png) | ![](img/ex6/postgres2time.png) | ![](img/ex6/sqlite2time.png) |
-| Funkcja okna | ![](./img/ex6/mysql3time.png) | ![](img/ex6/postgres3time.png) | ![](img/ex6/sqlite3time.png) |
+| Podzapytanie | ![](img/ex6/mssql/mysql1time.png) | ![](img/ex6/postgres/postgres1time.png) | ![](img/ex6/sqlite/sqlite1time.png) |
+| Join         | ![](img/ex6/mssql/mysql2time.png) | ![](img/ex6/postgres/postgres2time.png) | ![](img/ex6/sqlite/sqlite2time.png) |
+| Funkcja okna | ![](img/ex6/mssql/mysql3time.png) | ![](img/ex6/postgres/postgres3time.png) | ![](img/ex6/sqlite/sqlite3time.png) |
+
+ > Możemy zaobserwować, że zapytanie z użyciem podzapytania dla postgres nie wykonało się nawet po 5 minutach od wywołania. Dla SQLite również nie uzyskaliśmy wyniku po około 5 minutach. Jednym z pomysłow, było możliwe zawieszenie się bazy. Jednak, po testowym sprawdzeniu połączenia prostym zapytaniem, zakończyło się ono suckecem co świadczyło o poprawnym działaniu bazy, a problemem było mało efektywne działanie podzapytania w takim zapytaniu. Trochę lepiej poradziło sobie zapytanie z joinem a najlepiej z funkcją okna.
+
+> Dla MS SQL czasy były dłuższe dla zapytań, które dla pozostałych SZBD się wykonały, jednak zapytanie 1 wykonało się w porównywalnym czasie do pozostałych zapytań. Można wnioskować, że dzięki odpowiednim optymalizacjom MS SQL lepiej radzi sobie z optymalizacją pewnych zapytań.
 
 **Porównanie planów wykonania**
 
-| Zapytanie    | MS SQL                        | Postgres                       | SQLite                       |
-| ------------ | ----------------------------- | ------------------------------ | ---------------------------- |
-| Podzapytanie | ![](./img/ex6/mysql1plan.png) | ![](img/ex6/postgres1plan.png) | ![](img/ex6/sqlite1plan.png) |
-| Join         | ![](./img/ex6/mysql2plan.png) | ![](img/ex6/postgres2plan.png) | ![](img/ex6/sqlite2plan.png) |
-| Funkcja okna | ![](./img/ex6/mysql3plan.png) | ![](img/ex6/postgres3plan.png) | ![](img/ex6/sqlite3plan.png) |
+| Zapytanie    | MS SQL                         | Postgres                          | SQLite                          |
+| ------------ |--------------------------------|-----------------------------------|---------------------------------|
+| Podzapytanie | ![](./img/ex6/mssql/plan1.png) | ![](./img/ex6/postgres/plan1.png) | ![](./img/ex6/sqlite/plan1.png) |
+| Join         | ![](./img/ex6/mssql/plan2.png) | ![](./img/ex6/postgres/plan2.png) | ![](./img/ex6/sqlite/plan2.png) |
+| Funkcja okna | ![](./img/ex6/mssql/plan3.png) | ![](./img/ex6/postgres/plan3.png) | ![](./img/ex6/sqlite/plan3.png) |
 
-> Możemy zaobserwować, że zapytanie z użyciem podzapytania dla postgres nie wykonało się nawet po 5 minutach od wywołania. Dla SQLite również nie uzyskaliśmy wyniku po około 5 minutach. Jednym z pomysłow, było możliwe zawieszenie się bazy. Jednak, po testowym sprawdzeniu połączenia prostym zapytaniem, zakończyło się ono suckecem co świadczyło o poprawnym działaniu bazy, a problemem było mało efektywne działanie podzapytania w takim zapytaniu. Trochę lepiej poradziło sobie zapytanie z joinem a najlepiej z funkcją okna.
+> Dla Postgresa musieliśmy wygenerować plan przy pomocy funkcjonalności "Explain Plan" zamiast "Explain Analyse", gdyż ta druga wymaga uruchomienia i wykonania zapytania
 
-> Według analizy plany dla **joina** oraz **podzapytania** wyglądają podobnie z dwoma operacjami 'Full Index Scan' kazdy. Jednak, róznia się one miejscem agregacji gdzie jedna jest przed 'Hash Join' dla **podzapytania** a druga po w przypadku **joina**.
+> Dla MS SQL róznica między 1 i drugim zapytaniem jest bardzo prosta i polega na uniknięciu dodatkowej operacji compute scalar przez późniejsze łączenie tabel. Zapytanie trzecie jest optymalizowane przez pominięcie jednego ze skanów indeksów, za to ma 2 węzły sortowania w planie wykonania.
+
+> Dla Postgresa pierwsze zapytanie wykonuje potrójny full scan tabeli. Może być to powodem powolnego działania. Drugie i trzecie zapytanie wykonują odpowiednio po 2 i 1 skanie oraz nie agregują ich w sposób w jaki robi to zapytanie 1. Znacznie przyspiesza to czas działania.
+
+> Dla Sqlite pierwsze zpaytanie wykonuje 3 full skany, drugie za to jeden z nich zastępuje skanem indeksu w utworzonej tabeli classes. 3 zapytanie wykonuje tylko jeden pełny skan na wejściowej tabeli danych. 
 
 ---
 
@@ -548,40 +615,57 @@ Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna. Porów
 _MS SQL_
 
 ```sql
-SELECT ph.id,
-       ph.ProductID,
-       ph.ProductName,
-       ph.UnitPrice,
-	   (select avg(ph2.unitprice) from product_history as ph2 where ph.categoryid = ph2.categoryid) as AveragePrice,
-	   (select sum(ph3.value) from product_history as ph3 where ph.categoryid = ph3.categoryid) as TotalSale,
-	   (select avg(ph4.unitprice) from product_history as ph4 where ph.productid = ph4.productid and YEAR(ph.date) = YEAR(ph4.date)) as AveragePriceOverYear
-FROM product_history AS ph
+SELECT
+    ph.productid,
+    ph.ProductName,
+    ph.date,
+    ph.unitprice,
+    (SELECT AVG(unitprice) FROM product_history 
+	WHERE CategoryID = ph.CategoryID) AS avgPrice,
+    (SELECT SUM(value) FROM product_history 
+	WHERE CategoryID = ph.CategoryID) AS total,
+    (SELECT AVG(unitprice) FROM product_history 
+	WHERE productid = ph.productid AND YEAR(ph.date) = YEAR(date)) AS avgYear
+FROM
+    product_history ph
 ```
 
 _Postgres_
 
 ```sql
-SELECT ph.id,
-       ph.ProductID,
-       ph.ProductName,
-       ph.UnitPrice,
-	   (select avg(ph2.unitprice) from product_history as ph2 where ph.categoryid = ph2.categoryid) as AveragePrice,
-	   (select sum(ph3.value) from product_history as ph3 where ph.categoryid = ph3.categoryid) as TotalSale,
-	   (select avg(ph4.unitprice) from product_history as ph4 where ph.productid = ph4.productid and EXTRACT (YEAR FROM ph.date) = EXTRACT (YEAR FROM ph4.date)) as AveragePriceOverYear
-FROM product_history AS ph
+SELECT
+    ph.productid,
+    ph.ProductName,
+    ph.date,
+    ph.unitprice,
+    (SELECT AVG(unitprice) FROM product_history
+     WHERE CategoryID = ph.CategoryID) AS avgPrice,
+    (SELECT SUM(value) FROM product_history
+     WHERE CategoryID = ph.CategoryID) AS total,
+    (SELECT AVG(unitprice) FROM product_history
+     WHERE productid = ph.productid 
+     AND EXTRACT (YEAR FROM ph.date) = EXTRACT (YEAR FROM date)) AS avgYear
+FROM
+    product_history ph
 ```
 
 _SQLite_
 
 ```sql
-SELECT ph.id,
-       ph.ProductID,
-       ph.ProductName,
-       ph.UnitPrice,
-	   (select avg(ph2.unitprice) from product_history as ph2 where ph.categoryid = ph2.categoryid) as AveragePrice,
-	   (select sum(ph3.value) from product_history as ph3 where ph.categoryid = ph3.categoryid) as TotalSale,
-	   (select avg(ph4.unitprice) from product_history as ph4 where ph.productid = ph4.productid and strftime('%Y', ph.date) = strftime('%Y', ph4.date)) as AveragePriceOverYear
-FROM product_history AS ph
+SELECT
+    ph.productid,
+    ph.ProductName,
+    ph.date,
+    ph.unitprice,
+    (SELECT AVG(unitprice) FROM product_history
+     WHERE CategoryID = ph.CategoryID) AS avgPrice,
+    (SELECT SUM(value) FROM product_history
+     WHERE CategoryID = ph.CategoryID) AS total,
+    (SELECT AVG(unitprice) FROM product_history
+     WHERE productid = ph.productid 
+     AND strftime('%Y', ph.date) = strftime('%Y', date)) AS avgYear
+FROM
+    product_history ph
 ```
 
 - Polecenie z wykorzystaniem joina
@@ -595,16 +679,12 @@ SELECT
     ph.ProductName,
     ph.UnitPrice,
     AVG(ph2.unitprice) AS AveragePrice,
-    SUM(ph3.value) AS TotalSale,
-    AVG(ph4.unitprice) AS AveragePriceOverYear
-FROM
-    product_history AS ph
-JOIN
-    product_history AS ph2 ON ph.categoryid = ph2.categoryid
-JOIN
-    product_history AS ph3 ON ph.categoryid = ph3.categoryid
-JOIN
-    product_history AS ph4 ON ph.productid = ph4.productid AND YEAR(ph.date) = YEAR(ph4.date)
+    SUM(ph2.value) AS TotalSale,
+    AVG(ph3.unitprice) AS AveragePriceOverYear
+FROM product_history AS ph
+JOIN product_history AS ph2 ON ph.categoryid = ph2.categoryid
+JOIN product_history AS ph3 ON ph.productid = ph3.productid 
+        AND YEAR(ph.date) = YEAR(ph3.date)
 GROUP BY
     ph.id,
     ph.ProductID,
@@ -621,16 +701,12 @@ SELECT
     ph.ProductName,
     ph.UnitPrice,
     AVG(ph2.unitprice) AS AveragePrice,
-    SUM(ph3.value) AS TotalSale,
-    AVG(ph4.unitprice) AS AveragePriceOverYear
-FROM
-    product_history AS ph
-JOIN
-    product_history AS ph2 ON ph.categoryid = ph2.categoryid
-JOIN
-    product_history AS ph3 ON ph.categoryid = ph3.categoryid
-JOIN
-    product_history AS ph4 ON ph.productid = ph4.productid AND EXTRACT (YEAR FROM ph.date) = EXTRACT (YEAR FROM ph4.date)
+    SUM(ph2.value) AS TotalSale,
+    AVG(ph3.unitprice) AS AveragePriceOverYear
+FROM product_history AS ph
+         JOIN product_history AS ph2 ON ph.categoryid = ph2.categoryid
+         JOIN product_history AS ph3 ON ph.productid = ph3.productid
+    AND EXTRACT (YEAR FROM ph.date) = EXTRACT (YEAR FROM ph3.date)
 GROUP BY
     ph.id,
     ph.ProductID,
@@ -647,16 +723,12 @@ SELECT
     ph.ProductName,
     ph.UnitPrice,
     AVG(ph2.unitprice) AS AveragePrice,
-    SUM(ph3.value) AS TotalSale,
-    AVG(ph4.unitprice) AS AveragePriceOverYear
-FROM
-    product_history AS ph
-JOIN
-    product_history AS ph2 ON ph.categoryid = ph2.categoryid
-JOIN
-    product_history AS ph3 ON ph.categoryid = ph3.categoryid
-JOIN
-    product_history AS ph4 ON ph.productid = ph4.productid AND strftime('%Y', ph.date) = strftime('%Y', ph4.date)
+    SUM(ph2.value) AS TotalSale,
+    AVG(ph3.unitprice) AS AveragePriceOverYear
+FROM product_history AS ph
+         JOIN product_history AS ph2 ON ph.categoryid = ph2.categoryid
+         JOIN product_history AS ph3 ON ph.productid = ph3.productid
+    AND strftime('%Y', ph.date) = strftime('%Y', ph3.date)
 GROUP BY
     ph.id,
     ph.ProductID,
@@ -719,33 +791,46 @@ WINDOW w AS (partition by ph.categoryid),
 
 **Wyniki**
 
-| Zapytanie    | MS SQL                    | Postgres                   | SQLite                   |
-| ------------ | ------------------------- | -------------------------- | ------------------------ |
-| Podzapytanie | ![](./img/ex7/mysql1.png) | ![](img/ex7/postgres1.png) | ![](img/ex7/sqlite1.png) |
-| Join         | ![](./img/ex7/mysql2.png) | ![](img/ex7/postgres2.png) | ![](img/ex7/sqlite2.png) |
-| Funkcja okna | ![](./img/ex7/mysql3.png) | ![](img/ex7/postgres3.png) | ![](img/ex7/sqlite3.png) |
+> Tylko dla zapytania 3 wszystkie 3 SZBD dały wyniki w rozsądnym czasie. Dla zapytania 2 z joinami nie było żadnego wyniku w dobrym czasie, a dla 1 zapytania dostaliśmy wyniki tylko dla MS SQL.
+
+Wyniki dla MS SQL w zapytaniu 1
+![](./img/ex7/mssql/result1.png)
+
+| SZBD     | Wyniki dla zapytania 3               |
+|----------|--------------------------------------|
+| MS SQL   | ![](./img/ex7/mssql/result3.png)     |
+| Postgres | ![](./img/ex7/postgres/results3.png) |
+| SQLite   | ![](./img/ex7/sqlite/results3.png)   |
+
+> Widzimy, że dla 3 zapytania wyniki są posortowane względem id produktu a nie id tak jak to ma miejsce w zapytaniu 1.
+
+---
 
 Porównaj czasy oraz plany wykonania zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite).
 
 **Porównanie czasów wykonania**
 
-| Zapytanie    | MS SQL                        | Postgres                       | SQLite                       |
-| ------------ | ----------------------------- | ------------------------------ | ---------------------------- |
-| Podzapytanie | ![](./img/ex7/mysql1time.png) | ![](img/ex7/postgres1time.png) | ![](img/ex7/sqlite1time.png) |
-| Join         | ![](./img/ex7/mysql2time.png) | ![](img/ex7/postgres2time.png) | ![](img/ex7/sqlite2time.png) |
-| Funkcja okna | ![](./img/ex7/mysql3time.png) | ![](img/ex7/postgres3time.png) | ![](img/ex7/sqlite3time.png) |
+| Zapytanie    | MS SQL                         | Postgres                        | SQLite                        |
+| ------------ |--------------------------------|---------------------------------|-------------------------------|
+| Podzapytanie | ![](./img/ex7/mssql/time1.png) | ![](img/ex7/postgres/time1.png) | ![](img/ex7/sqlite/time1.png) |
+| Join         | ![](./img/ex7/mssql/time2.png) | ![](img/ex7/postgres/time2.png) | ![](img/ex7/sqlite/time2.png) |
+| Funkcja okna | ![](./img/ex7/mssql/time3.png) | ![](img/ex7/postgres/time3.png) | ![](img/ex7/sqlite/time3.png) |
+
+> Jak widać czasy dla joina, oraz dla podzapytania w Postgres i SQLite są zbyt długie. Można by się pokusić o stwierdzenie, że czas dla MS SQL również jest bardzo długi. Widzimy, że dla ostatniego zapytania MS SQL też nie radzi sobie najlepiej, bo wykonuje je w 2:47 minuty, kiedy Postgres i SQLite wykonują je w nieco ponad 10 sekund ewidentnie radząc sobie lepiej.
 
 **Porównanie planów wykonania**
 
-| Zapytanie    | MS SQL                        | Postgres                         | SQLite                         |
-| ------------ | ----------------------------- | -------------------------------- | ------------------------------ |
-| Podzapytanie | ![](./img/ex7/mysql1plan.png) | ![](img/ex7/postgres1plan.png)   | ![](img/ex7/sqlite1plan.png)   |
-| Join         | ![](./img/ex7/mysql2plan.png) | ![](./img/ex7/postgres2plan.png) | ![](./img/ex7/sqlite2plan.png) |
-| Funkcja okna | ![](./img/ex7/mysql3plan.png) | ![](./img/ex7/postgres3plan.png) | ![](./img/ex7/sqlite3plan.png) |
+| Zapytanie    | MS SQL                         | Postgres                          | SQLite                          |
+| ------------ |--------------------------------|-----------------------------------|---------------------------------|
+| Podzapytanie | ![](./img/ex7/mssql/plan1.png) | ![](./img/ex7/postgres/plan1.png) | ![](./img/ex7/sqlite/plan1.png) |
+| Join         | ![](./img/ex7/mssql/plan2.png) | ![](./img/ex7/postgres/plan2.png) | ![](./img/ex7/sqlite/plan2.png) |
+| Funkcja okna | ![](./img/ex7/mssql/plan3.png) | ![](./img/ex7/postgres/plan3.png) | ![](./img/ex7/sqlite/plan3.png) |
 
-> W przypadku MS SQL oraz PostgreSQL funkcje okna wykonują się bardziej liniowo niż ich odpowiedniki join oraz podzapytanie.
+> Dla MS SQL pierwsze zapytanie wykonuje 4 skany indeksu a dodatkowo 6 operacji hash match. Jest to nieoptymalne. Dla Joina plan tworzy dużo mniej rozbudowane drzewo niż w pierwszym przypadku, jednak nie oznacza to optymalizacji. Praktycznie cały koszt zapytania jest zawarty w skanie indeksu i obliczeniu skalarów. Dopiero użycie funkcji okna pozwala na użycie tylko jednego skanu indeksu, ale dalej zapytanie zajmuje dużo czasu.
 
-> Można też zauważyc, że czas wykonywania dla PostgreSQL był znacznie dłuższy niż w przypadku innych SZBD. Może być to spowodowane tym, że PostgreSQL wykonuje znacznie więcej full scanów. Możemy również zauważyć, że w przypadku podzapytania dla SQLite oraz MS SQL nie udało się otrzymać wyniku w czasie 5 min.
+> Dla Postgresa pierwsze zapytanie wykonuje 4 skany tabeli i 3 agregacje. Przez takie kosztowne operacje zapytanie wykonuje się długo. Użycie joinów zdecydowanie rozbudowuje plan zapytania, co jednak nie przyspiesza go. Wykonywane są duże agregacje, hash joiny i sortowania. Dla funkcji okna uzyskujemy prosty plan z 2 sortowaniami i 2 operacjiami transformacji co przekłada się na sprawne działanie. PLan jest bardzo podobny do tego dla MS SQL poza kilkoma drobnymi operacjami, które są na pominięte. 
+
+> Dla SQLite, z planu pierwszego możemy wywnioskować, że użyte są 3 zapytania które obejmują skany tabel. Dodatkowo użyty jest jeszcze jeden skan product history. Poza tym nie mamy informacji o tym, jak dane są agregowane. Dla joinów można zauważyć użycie indeksów i jednego pełnego skanu. 2 węzły w planie są jednak niestety nierozpoznane przez program. Dla trzeciego planu widzimy tylko jeden skan tabeli. Pozostałe dwa to skany podzapytania. Jest to też jedyne zapytanie które dla SQLite wykonało się w sensownym czasie. Możemy wnioskować, że bardzo czasochłonną operacją jest właśnie skan tabeli.
 
 ---
 
@@ -769,9 +854,9 @@ select productid,
 from products;
 ```
 
-| MS SQL                    |
-| ------------------------- |
-| ![](./img/ex8/mysql1.png) |
+Spróbuj uzyskać ten sam wynik bez użycia funkcji okna.
+
+Wykonanie bez funkcji okna.
 
 ```sql
 SELECT
@@ -793,40 +878,21 @@ FROM
 ORDER BY p1.categoryid, rowno;
 ```
 
+Udało się uzyskać wyniki zgadzające się.
+
 | MS SQL                    |
 | ------------------------- |
 | ![](./img/ex8/mysql1.png) |
 
-> Widać zasadniczą różnicę działania dla kolumny `rowno` zwiększanie wartość musiałaby rosnąć dla zbioru produktów o tej samej cenie. Podzapytania róznią się dla takich samych wartości w kolumnie.
 
-> `row_number` sortuje po unit price i numeruje wiersze.
 
-> `rank` sortuje po unit price i przypisuje równe wartości dla tych samych cen.
+> `row_number` służy do nadawania numerów porządkowych wierszom zgodnie z określonym porządkiem. W tym przypadku wykonywana jest po unit price i numeruje wiersze.
 
-> `dense_rank` sortuje po unit price i przypisuje równe wartości dla tych samych cen, ale nie ma przerw w numeracji.
+> `rank` przypisuje numer porządkowy każdemu wierszowi tabeli, sortując je według kolumny unit price i przypisuje równe wartości dla tych samych cen. Jeśli dwa wiersze mają takie same wartości w kolumnie sortującej, to funkcja `rank` przypisze im ten sam numer porządkowy, a następny numer zostanie pominięty.
 
-Spróbuj uzyskać ten sam wynik bez użycia funkcji okna:
+> `dense_rank` jest podobna do funkcji `rank`, ale zachowuje się nieco inaczej w przypadku wierszy o takich samych wartościach w polu sortującym. W przypadku wierszy o takich samych wartościach w polu sortującym, `dense_rank` nadaje im kolejne, nieprzerwane numery porządkowe. W tym przypadku kolumną tą jest unit price i przypisuje równe wartości dla tych samych cen, ale nie ma przerw w numeracji.
 
-```sql
-SELECT
-    p1.productid,
-    p1.productname,
-    p1.unitprice,
-    p1.categoryid,
-    (SELECT COUNT(*) + 1
-     FROM products p2
-     WHERE p2.categoryid = p1.categoryid AND p2.unitprice > p1.unitprice) as rowno,
-    (SELECT COUNT(DISTINCT p3.unitprice) + 1
-     FROM products p3
-     WHERE p3.categoryid = p1.categoryid AND p3.unitprice > p1.unitprice) as rankprice,
-    (SELECT COUNT(DISTINCT p4.unitprice) + 1
-     FROM products p4
-     WHERE p4.categoryid = p1.categoryid AND p4.unitprice > p1.unitprice) as denserankprice
-FROM products p1
-ORDER BY p1.categoryid, rowno;
-```
-
-> To zapytanie wykorzystuje podzapytania do zliczenia liczby produktów w tej samej kategorii o wyższej cenie jednostkowej, co skutecznie klasyfikuje produkty. Należy pamiętać, że to podejście może być znacznie wolniejsze niż używanie funkcji okna, zwłaszcza w przypadku dużych zbiorów danych.
+> Do wykonania zapytania bez funkcji okna wykorzystano podzapytania do zliczenia liczby produktów w tej samej kategorii o wyższej cenie jednostkowej, co skutecznie klasyfikuje produkty. Należy pamiętać, że to podejście może być znacznie wolniejsze niż używanie funkcji okna, zwłaszcza w przypadku dużych zbiorów danych.
 
 ---
 
