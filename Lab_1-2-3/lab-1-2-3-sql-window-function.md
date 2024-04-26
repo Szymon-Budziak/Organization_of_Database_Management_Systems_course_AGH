@@ -911,126 +911,202 @@ Dla każdego produktu, podaj 4 najwyższe ceny tego produktu w danym roku. Zbió
 
 Uporządkuj wynik wg roku, nr produktu, pozycji w rankingu
 
-```sql
-WITH ranked_prices AS (
-  SELECT
-    YEAR(date) AS year, p.productid, p.ProductName, p.unitprice, p.date,
-    ROW_NUMBER() OVER(PARTITION BY p.productid, YEAR(date) ORDER BY p.unitprice DESC) AS pricerank
-  FROM product_history as p
-  INNER JOIN products ON p.productid = products.ProductID
-)
+Z powodu różnej składni dla wyboru roku w zapytaniu, dla różnych SZBD, stworzone zostały osobne zapytania dla każdego z nich.
 
-SELECT year, productid, productname, unitprice, date, pricerank
-FROM ranked_prices
-WHERE pricerank <= 4
-ORDER BY year, productid, pricerank;
-```
+**Zapytania**
 
-| MS SQL                    |
-| ------------------------- |
-| ![](./img/ex9/mysql1.png) |
-
-Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
+_MS SQL_
 
 ```sql
-WITH ranked_prices AS (
-  SELECT
-    YEAR(date) AS year,
-    p.productid,
-    p.ProductName,
-    p.unitprice,
-    p.date,
-	(SELECT COUNT(*) + 1 FROM product_history p2
-     WHERE p2.productid = p.productid
-         AND p2.unitprice > p.unitprice AND YEAR(p.date) = YEAR(p2.date)) as pricerank
-  FROM product_history as p
-  INNER JOIN products ON p.productid = products.ProductID
-)
-
-SELECT
-  year,
-  productid,
-  productname,
-  unitprice,
-  date,
-  pricerank
-FROM
-  ranked_prices
-WHERE
-  pricerank <= 4
-ORDER BY
-  year,
-  productid,
-  pricerank;
-```
-
-> Czas działania dla MS SQL był bardzo długi i nie uzyskaliśmy wyniku w rozsądnym czasie. Dopiero po ograniczeniu ilości danych, otrzymaliśmy wynik w rozsądnym czasie, co pozwoliło zaobserwować dane do 10000 wierszy. Jednka pomimo takiego ogarniaczenia nie udało się
-
-> Dla postgres musieliśmy użyć innej składni by wywołać zapytanie, jednak dalej jego czas obliczeń nie był skończony w rozsądnym czasie, co znowu zmusiło nas do ograniczenia ilości wierszy.
-
-| Postgres                     |
-| ---------------------------- |
-| ![](./img/ex9/postgres1.png) |
-
-```sql
-WITH ranked_prices AS (
-  SELECT
-    extract ("YEAR" from (p.date)) AS year,
-    p.productid,p.ProductName,p.unitprice,p.date,
-	(SELECT COUNT(*) + 1 FROM product_history p2
-     WHERE p2.productid = p.productid
-         AND p2.unitprice > p.unitprice AND extract ("YEAR" from (p.date)) = extract ("YEAR" from (p2.date))) as pricerank
-  FROM product_history as p
-  INNER JOIN products ON p.productid = products.ProductID
-)
-
-SELECT
-  year,
-  productid,productname,unitprice,date,pricerank
-FROM
-  ranked_prices
-WHERE
-  pricerank <= 4
-ORDER BY
-  year,productid,pricerank;
-```
-
-| SQLite                     |
-| -------------------------- |
-| ![](./img/ex9/sqlite1.png) |
-
-Składnia wyboru roku różniła się również dla sqlite. Również czas nie był zadowalający i nie dostaliśmy wyniku, co również spodowało ograniczenie ilości wierszy.
-
-```sql
-WITH ranked_prices AS (
+WITH RankedPrice AS (
     SELECT
-        strftime('%Y',p.date) AS year,
-        p.productid,p.ProductName,p.unitprice,p.date,
-        (SELECT COUNT(*) + 1 FROM product_history p2
-         WHERE p2.productid = p.productid
-           AND p2.unitprice > p.unitprice AND strftime('%Y',p.date) = strftime('%Y',p2.date)) as pricerank
-    FROM product_history as p
-             INNER JOIN products ON p.productid = products.ProductID
+        YEAR(PH.Date) AS Year,
+        PH.ProductID,
+        PH.ProductName,
+        PH.UnitPrice,
+        ROW_NUMBER() OVER (PARTITION BY PH.ProductID, YEAR(PH.Date)
+                           ORDER BY PH.UnitPrice DESC) AS PriceRank
+    FROM product_history as PH
 )
 
-SELECT
-    year,productid,productname,unitprice,date,pricerank
-FROM
-    ranked_prices
-WHERE
-    pricerank <= 4
-ORDER BY
-    year,productid,pricerank;
+SELECT *
+FROM RankedPrice
+WHERE PriceRank <= 4
+ORDER BY Year, ProductID, PriceRank;
 ```
 
-**Plan wykonania**
+_Postgres_
+
+```sql
+WITH RankedPrice AS (
+    SELECT
+        EXTRACT(year from PH.date) AS Year,
+        PH.ProductID,
+        PH.ProductName,
+        PH.UnitPrice,
+        ROW_NUMBER() OVER (PARTITION BY PH.ProductID, EXTRACT(year from PH.date)
+                           ORDER BY PH.UnitPrice DESC) AS PriceRank
+    FROM product_history as PH
+)
+
+SELECT *
+FROM RankedPrice
+WHERE PriceRank <= 4
+ORDER BY Year, ProductID, PriceRank;
+```
+
+_SQLite_
+
+```sql
+WITH RankedPrice AS (
+    SELECT
+        strftime('%Y', PH.date) AS Year,
+        PH.ProductID,
+        PH.ProductName,
+        PH.UnitPrice,
+        ROW_NUMBER() OVER (PARTITION BY PH.ProductID, strftime('%Y', PH.date)
+                           ORDER BY PH.UnitPrice DESC) AS PriceRank
+    FROM product_history as PH
+)
+
+SELECT *
+FROM RankedPrice
+WHERE PriceRank <= 4
+ORDER BY Year, ProductID, PriceRank;
+```
+
+**Wyniki zapytań**
 
 | MS SQL                    | Postgres                   | SQLite                   |
 | ------------------------- | -------------------------- | ------------------------ |
-| ![](./img/ex9/mysql2.png) | ![](img/ex9/postgres2.png) | ![](img/ex9/sqlite2.png) |
+| ![](./img/ex9/mssql1.png) | ![](img/ex9/postgres1.png) | ![](img/ex9/sqlite1.png) |
 
-> Możemy zauważyć, że w systemach Postgres oraz SQLite głównym kosztem jest agregowanie i odpowiednie joinowanie tablic. Co ciekawe
-> analogiczne podzapytanie dla takich danych zarówno dla MS SQL Server jak i SQLite wykonało się bardzo szybko (jednak widocznie wolniej od zapytania wykorzystującego funkcje okna).
+Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
+
+**Zapytania bez funkcji okna**
+
+_MS SQL_
+
+```sql
+WITH RankedPrice AS (
+    SELECT
+        YEAR(PH.Date) AS Year,
+        PH.ProductID,
+        P.ProductName,
+        PH.UnitPrice,
+        PH.Date AS PriceDate,
+        (
+            SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
+            FROM product_history AS PH2
+            WHERE YEAR(PH2.Date) = YEAR(PH.Date)
+                  AND PH2.ProductID = PH.ProductID
+                  AND PH2.UnitPrice > PH.UnitPrice
+        ) AS PriceRank
+    FROM product_history AS PH
+    INNER JOIN products AS P ON PH.ProductID = P.ProductID
+)
+
+SELECT
+    Year,
+    ProductID,
+    ProductName,
+    UnitPrice AS Price,
+    PriceDate AS Date,
+    PriceRank
+FROM RankedPrice
+WHERE PriceRank <= 4
+ORDER BY Year, ProductID, PriceRank;
+```
+
+_Postgres_
+
+```sql
+WITH RankedPrice AS (
+    SELECT
+        EXTRACT(year from PH.date) AS Year,
+        PH.ProductID,
+        P.ProductName,
+        PH.UnitPrice,
+        PH.Date AS PriceDate,
+        (
+            SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
+            FROM product_history AS PH2
+            WHERE EXTRACT(year from PH2.date) = YEAR(PH.Date)
+                  AND PH2.ProductID = PH.ProductID
+                  AND PH2.UnitPrice > PH.UnitPrice
+        ) AS PriceRank
+    FROM product_history AS PH
+    INNER JOIN products AS P ON PH.ProductID = P.ProductID
+)
+
+SELECT 
+    Year,
+    ProductID,
+    ProductName,
+    UnitPrice AS Price,
+    PriceDate AS Date,
+    PriceRank
+FROM RankedPrice
+WHERE PriceRank <= 4
+ORDER BY Year, ProductID, PriceRank;
+```
+
+_SQLite_
+
+```sql
+WITH RankedPrice AS (
+    SELECT
+        strftime('%Y',  PH.date) AS Year,
+        PH.ProductID,
+        P.ProductName,
+        PH.UnitPrice,
+        PH.Date AS PriceDate,
+        (
+            SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
+            FROM product_history AS PH2
+            WHERE strftime('%Y',  PH2.date) = strftime('%Y', PH.Date)
+              AND PH2.ProductID = PH.ProductID
+              AND PH2.UnitPrice > PH.UnitPrice
+        ) AS PriceRank
+    FROM product_history AS PH
+             INNER JOIN products AS P ON PH.ProductID = P.ProductID
+)
+
+SELECT
+    Year,
+    ProductID,
+    ProductName,
+    UnitPrice AS Price,
+    PriceDate AS Date,
+    PriceRank
+FROM RankedPrice
+WHERE PriceRank <= 4
+ORDER BY Year, ProductID, PriceRank;
+```
+
+| MS SQL                    | Postgres                   | SQLite                   |
+| ------------------------- | -------------------------- | ------------------------ |
+| ![](./img/ex9/mssql2.png) | ![](img/ex9/postgres2.png) | ![](img/ex9/sqlite2.png) |
+
+**Czasy wykonania**
+
+| Funkcja okna lub nie | MS SQL                        | Postgres                         | SQLite                         |
+| -------------------- | ----------------------------- | -------------------------------- | ------------------------------ |
+| Z funkcją okna       | ![](./img/ex9/mssql1time.png) | ![](img/ex9/postgres1time.png)   | ![](./img/ex9/sqlite1time.png) |
+| Bez funkcji okna     | ![](./img/ex9/mssql2time.png) | ![](./img/ex9/postgres2time.png) | ![](./img/ex9/sqlite2time.png) |
+
+**Plany wykonania**
+
+| Funkcja okna lub nie | MS SQL                        | Postgres                         | SQLite                         |
+| -------------------- | ----------------------------- | -------------------------------- | ------------------------------ |
+| Z funkcją okna       | ![](./img/ex9/mssql1plan.png) | ![](img/ex9/postgres1plan.png)   | ![](./img/ex9/sqlite1plan.png) |
+| Bez funkcji okna     | ![](./img/ex9/mssql2plan.png) | ![](./img/ex9/postgres2plan.png) | ![](./img/ex9/sqlite2plan.png) |
+
+> W tym zadaniu, konieczne było skorzystanie z tabeli `product_history`, która posiada 2500 rekordów.
+
+> Wyniki testów wyraźnie pokazują, że korzystanie z funkcji okna znacząco skraca czas wykonania zapytań w porównaniu z alternatywnym podejściem, które ich nie wykorzystuje. W każdym systemie zarządzania bazą danych zauważalne jest przyspieszenie, jednak różnice między użyciem funkcji okna a ich brakiem są najbardziej widoczne w przypadku SQLIte. W Postgres i MS SQL również obserwuje się znaczne skrócenie czasu wykonania zapytań przy użyciu funkcji okna.
+
+> Koszt w przypadku wykorzystania funkcji okna jest znacznie niższy niezależnie od SZBD. Co do planów wykonania to dla `MS SQL` oraz `Postgres` plany są bardzo proste oraz podobne do siebie.
 
 ---
 
@@ -1043,16 +1119,16 @@ Wykonaj polecenia, zaobserwuj wynik. Jak działają funkcje `lag()`, `lead()`
 ```sql
 select productid,
        productname,
-       categoryid, date, unitprice, lag(unitprice) over (partition by productid order by date)
-    as previousprodprice, lead(unitprice) over (partition by productid order by date)
-    as nextprodprice
+       categoryid, date, unitprice,
+       lag(unitprice) over (partition by productid order by date) as previousprodprice,
+       lead(unitprice) over (partition by productid order by date) as nextprodprice
 from product_history
 where productid = 1 and year (date) = 2022
 order by date;
 
-with t as (select productid, productname, categoryid, date, unitprice, lag(unitprice) over (partition by productid
-    order by date) as previousprodprice, lead(unitprice) over (partition by productid
-    order by date) as nextprodprice
+with t as (select productid, productname, categoryid, date, unitprice,
+           lag(unitprice) over (partition by productid order by date) as previousprodprice,
+           lead(unitprice) over (partition by productid order by date) as nextprodprice
 from product_history
     )
 select *
@@ -1061,80 +1137,118 @@ where productid = 1 and year (date) = 2022
 order by date;
 ```
 
-> Funckje lag i lead pozwalają na dostęp do wartości odpowiednio z poprzednich i kolejnych wierszy. Mogą być przydatne by porównywać wartości w różnych punktach czasu
-
 | MS SQL                     |
 | -------------------------- |
-| ![](./img/ex10/mysql0.png) |
+| ![](./img/ex10/mssql0.png) |
+
+> Funckje `lag` i `lead` pozwalają na dostęp do wartości odpowiednio z poprzednich i kolejnych wierszy. Mogą być przydatne by porównywać wartości w różnych punktach czasu. Zastosowanie funkcji `lag(unitprice)` umożliwia pobranie ceny produktu z poprzedniego rekordu, które przez użycie funkcji okna i w niej order by date są posortowane według daty. Natomiast funkcja `lead(unitprice)` zwraca cenę produktu z następnego rekordu. Dzięki nim można porównywać bieżące wartości z cenami poprzednimi lub następnymi w uporządkowanym zestawie danych.
 
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
-**Ten same wyniki ale bez funkcji okna**
+**Wyniki bez funkcji okna**
+
+_Zapytanie 1_
 
 ```sql
-SELECT t1.productid,
-     t1.productname,
-     t1.categoryid,
-     t1.date,
-     t1.unitprice,
-     t2.unitprice AS previousprodprice,
-     t3.unitprice AS nextprodprice
-FROM product_history t1
-    JOIN product_history t2 ON t2.productid = t1.productid AND t2.date < t1.date
-    JOIN product_history t3 ON t3.productid = t1.productid AND t3.date > t1.date
-WHERE t1.productid = 1 AND YEAR(t1.date) = 2022
-ORDER BY t1.date;
+SELECT
+    ph1.productid,
+    ph1.productname,
+    ph1.categoryid,
+    ph1.date,
+    ph1.unitprice AS currentprodprice,
+    ph2.unitprice AS previousprodprice,
+    ph3.unitprice AS nextprodprice
+FROM product_history as ph1
+LEFT JOIN product_history as ph2 ON ph1.productid = ph2.productid
+                            AND ph1.date > ph2.date
+                            AND year(ph1.date) = 2022
+                            AND ph2.date = (
+                                SELECT MAX(date)
+                                FROM product_history
+                                WHERE productid = ph1.productid
+                                AND date < ph1.date
+                                AND year(date) = 2022
+                       )
+LEFT JOIN product_history as ph3 ON ph1.productid = ph3.productid
+                            AND ph1.date < ph3.date
+                            AND year(ph1.date) = 2022
+                            AND ph3.date = (
+                                SELECT MIN(date)
+                                FROM product_history
+                                WHERE productid = ph1.productid
+                                AND date > ph1.date
+                                AND year(date) = 2022
+                       )
+WHERE ph1.productid = 1 AND year(ph1.date) = 2022
+ORDER BY ph1.date;
+```
 
+_Zapytanie 2_
+
+```sql
 WITH t AS (
     SELECT
-        curr.productid,
-        curr.productname,
-        curr.categoryid,
-        curr.date,
-        curr.unitprice,
-        prev.unitprice AS previousprodprice,
-        next.unitprice AS nextprodprice
-    FROM
-        product_history AS curr
-    JOIN
-        product_history AS prev ON curr.productid = prev.productid AND prev.date = (
-            SELECT MAX(date) FROM product_history WHERE productid = curr.productid AND date < curr.date
-        )
-    JOIN
-        product_history AS next ON curr.productid = next.productid AND next.date = (
-            SELECT MIN(date) FROM product_history WHERE productid = curr.productid AND date > curr.date
-        )
+        ph1.productid,
+        ph1.productname,
+        ph1.categoryid,
+        ph1.date,
+        ph1.unitprice AS currentprodprice,
+        ph2.unitprice AS previousprodprice,
+        ph3.unitprice AS nextprodprice
+FROM product_history as ph1
+LEFT JOIN product_history as ph2 ON ph1.productid = ph2.productid
+                            AND ph1.date > ph2.date
+                            AND year(ph1.date) = 2022
+                            AND ph2.date = (
+                                SELECT MAX(date)
+                                FROM product_history
+                                WHERE productid = ph1.productid
+                                AND date < ph1.date
+                                AND year(date) = 2022
+                           )
+LEFT JOIN product_history as ph3 ON ph1.productid = ph3.productid
+                            AND ph1.date < ph3.date
+                            AND year(ph1.date) = 2022
+                            AND ph3.date = (
+                                SELECT MIN(date)
+                                FROM product_history
+                                WHERE productid = ph1.productid
+                                AND date > ph1.date
+                                AND year(date) = 2022
+                           )
 )
 SELECT *
 FROM t
-WHERE productid = 1 AND YEAR(date) = 2022
+WHERE productid = 1 AND year(date) = 2022
 ORDER BY date;
 ```
 
-**Wyniki**
+**Wyniki zapytań**
 
-| MS SQL                     | Postgres                    | SQLite                    |
-| -------------------------- | --------------------------- | ------------------------- |
-| ![](./img/ex10/mysql1.png) | ![](img/ex10/postgres1.png) | ![](img/ex10/sqlite1.png) |
-
-**Plan wykonania**
-
-| MS SQL                         | Postgres                        | SQLite                          |
-| ------------------------------ | ------------------------------- | ------------------------------- |
-| ![](./img/ex10/mysql1plan.png) | ![](img/ex10/postgres1plan.png) | ![](./img/ex10/sqlite1plan.png) |
+| Zapytanie | MS SQL                     | Postgres                    | SQLite                    |
+| --------- | -------------------------- | --------------------------- | ------------------------- |
+| 1         | ![](./img/ex10/mssql1.png) | ![](img/ex10/postgres1.png) | ![](img/ex10/sqlite1.png) |
+| 2         | ![](./img/ex10/mssql2.png) | ![](img/ex10/postgres2.png) | ![](img/ex10/sqlite2.png) |
 
 **Czasy wykonania**
 
-| MS SQL                         | Postgres                        | SQLite                          |
-| ------------------------------ | ------------------------------- | ------------------------------- |
-| ![](./img/ex10/mysql1time.png) | ![](img/ex10/postgres1time.png) | ![](./img/ex10/sqlite1time.png) |
+| Zapytanie | MS SQL | Postgres | SQLite |
+| --------- | ------ | -------- | ------ |
+| 1         | 2.4 s  | 1.5 s    | 1.2 s  |
+| 2         | 2.3 s  | 1.7 s    | 1.0 s  |
 
-> Zostały uzyskane takie same wyniki po wykonaniu funkcji.
+**Plany wykonania**
 
-> Z definicji oraz na podstawie powyższych wyników można wywnioskować, że funkcja LAG umożliwia dostęp do wartości z poprzedniego wiersza w ramach określonego zestawu danych.
-> Funkcja LEAD natomiast umożliwia dostęp do wartości z następnego wiersza w ramach określonego zestawu
+| Zapytanie | MS SQL                         | Postgres                        | SQLite                          |
+| --------- | ------------------------------ | ------------------------------- | ------------------------------- |
+| 1         | ![](./img/ex10/mssql1plan.png) | ![](img/ex10/postgres1plan.png) | ![](./img/ex10/sqlite1plan.png) |
+| 2         | ![](./img/ex10/mssql2plan.png) | ![](img/ex10/postgres2plan.png) | ![](./img/ex10/sqlite2plan.png) |
 
-## danych
+> W tym zadaniu, konieczne było skorzystanie z tabeli `product_history`, która posiada 2500 rekordów.
+
+> Zapytania z funkcjami okna wykonują się znacznie szybciej, są prostrze, czytelniejsze i bardziej zwięzłe. Zapytania bez funkcji okna są bardziej skomplikowane, wymagają złączeń oraz podzapytań, co sprawia, że są mniej czytelne. Zapytania z użyciem funkcji okna mają również wielokrotnie mniejszy koszt wykonania i prostszy plan wykonania niż ich odpowiedniki bez funkcji okna.
+
+> W PostgreSQL i SQLite zauważalne jest nieznaczne przyspieszenie zapytań wykorzystujących funkcje okna w porównaniu z ich odpowiednikami, które nie korzystają z tych funkcji. Natomiast w przypadku SQL Servera zapytania bez funkcji okna są nieco szybsze niż te z ich użyciem.
 
 # Zadanie 11
 
@@ -1151,64 +1265,42 @@ Zbiór wynikowy powinien zawierać:
 - datę poprzedniego zamówienia danego klienta,
 - wartość poprzedniego zamówienia danego klienta.
 
+**Zapytanie**
+
 ```sql
-WITH OrderValues AS (
-  SELECT o.OrderID,
-  o.CustomerID,
-  o.OrderDate,
-  o.Freight,
-  SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS TotalValue
-  FROM orders o
-    INNER JOIN orderdetails od ON o.OrderID = od.OrderID
-  GROUP BY o.OrderID, o.CustomerID, o.OrderDate, o.Freight
-),
-RankedOrders AS (
-  SELECT c.CompanyName AS CustomerName,
-  ov.OrderID,
-  ov.OrderDate,
-  ov.TotalValue + ov.Freight AS OrderValue,
-  LAG(ov.OrderID) OVER(PARTITION BY ov.CustomerID ORDER BY ov.OrderDate)
-  AS PreviousOrderID,
-  LAG(ov.OrderDate) OVER(PARTITION BY ov.CustomerID ORDER BY ov.OrderDate)
-  AS PreviousOrderDate,
-  LAG(ov.TotalValue + ov.Freight) OVER(PARTITION BY ov.CustomerID ORDER BY ov.OrderDate)
-  AS PreviousOrderValue
-  FROM OrderValues ov
-    INNER JOIN customers c ON ov.CustomerID = c.CustomerID
-)
-SELECT
-  CustomerName,
-  OrderID,
-  OrderDate,
-  OrderValue,
-  PreviousOrderID,
-  PreviousOrderDate,
-  PreviousOrderValue
-FROM RankedOrders
-ORDER BY CustomerName, OrderDate;
+with Data as (
+    SELECT O.OrderID, C.CompanyName, O.OrderDate,
+    O.Freight + sum(OD.UnitPrice * OD.Quantity * (1 - OD.Discount)) as Cost,
+    lag(O.OrderID) over (partition by C.CustomerID order by O.OrderDate) as PrevOrderID,
+    lag(O.OrderDate) over (partition by C.CustomerID order by O.OrderDate) as PrevOrderDate
+FROM Orders as O
+JOIN Customers as C on O.CustomerID = C.CustomerID
+JOIN [Order Details] as OD on O.OrderID = OD.OrderID
+GROUP BY O.OrderID, C.CustomerID, C.CompanyName, O.OrderDate, O.Freight)
+
+
+SELECT Data.*,
+    O.Freight + sum(OD.UnitPrice * OD.Quantity * (1 - OD.Discount)) as PrevCost
+FROM Data
+LEFT JOIN Orders as O on O.OrderID = PrevOrderID
+LEFT JOIN [Order Details] as OD on O.OrderID = OD.OrderID
+GROUP BY O.Freight, Data.OrderID, Data.CompanyName, Data.OrderDate, Data.Cost, Data.PrevOrderID, Data.PrevOrderDate
+ORDER BY Data.OrderID;
 ```
 
-**Wyniki**
+**Wynik**
 
-| Postgres                     |
-| ---------------------------- |
-| ![](./img/ex11/postgres.png) |
-
-**Plan wykonania**
-
-| Postgres                         |
-| -------------------------------- |
-| ![](./img/ex11/postgresplan.png) |
+![](./img/ex11/mssql.png)
 
 **Czas wykonania**
 
-| Postgres                         |
-| -------------------------------- |
-| ![](./img/ex11/postgrestime.png) |
+![](./img/ex11/mssqltime.png)
 
-> Czasy oraz ilości wykonanych operacji w przypadku SQLite oraz PostgreSQL są zbliżone, natomiast w przypadku MS SQL Server ilość operacji (widać na planie) jest znacznie większa co przekłada się na czas który również jest zwiększony.
+**Plan wykonania**
 
-> W planie moża również zauważyć, że MS SQL Serwer wykonuje znacznie więcej operacji, które mogą przekładać się na tak ubogi performance.
+![](./img/ex11/mssqlplan.png)
+
+> Zapytanie zostało sprawdzone zarówno na bazie danych MS SQL, jak i PostgreSQL. W każdym przypadku czas wykonania wyniósł mniej niż 500 ms. Analiza planu wykonania nie wykazała żadnych istotnych różnic między tymi systemami zarządzania bazą danych.
 
 # Zadanie 12 - obserwacja
 
@@ -1234,65 +1326,88 @@ order by categoryid, unitprice desc;
 
 **Wynik**
 
-| SQLite                      |
-| --------------------------- |
-| ![](./img/ex12/sqlite1.png) |
+![](./img/ex12/postgres.png)
 
-> Funkcje okna mają zasięg działania (RANGE). Jeśli używamy ORDER BY i nie
-> podamy RANGE to domyślne wartości to: RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. Oznacza, że wybierzemy najmniejszą wartość między pierwszym, a obecnym wierszem
-> tabeli. W zadaniu mamy klauzulę: **order by categoryid, unitprice desc**, to tabela już jest posortowana po cenie, daltego otrzyujemy zawsze przedmiot z obecnego wiersza.
+> Funkcje okna mają zasięg działania (RANGE). Jeśli używamy ORDER BY i nie podamy RANGE to domyślne wartości to: RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. Oznacza, że wybierzemy najmniejszą wartość między pierwszym, a obecnym wierszem tabeli. W zadaniu mamy klauzulę: **order by categoryid, unitprice desc**, to tabela już jest posortowana po cenie, daltego otrzyujemy zawsze przedmiot z obecnego wiersza.
 
 > Funkcja **first_value()** pokazuje najdroższy produkt w danej kategorii natomiast funkcja **last_value()** pokazuje wiersz, który posiadałby najwyższą wartość funkcji **row_number()** dla wierszy posiadających taką samą wartość funkcji **rank()** jak aktualnie badany wiersz. Zachowanie funkcji last_value() można zmienić ustawiając opcję range na between unbounded preceding and unbounded following.
 
+> Aby funkcja **last_value()** pokazywała najtańszy produkt w danej kategorii należy zamienić domyślny zakres funkcji z **RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW** na **ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING**. Zmodyfikowane zapytanie wygląda następująco:
+
+```sql
+select productid, productname, unitprice, categoryid,
+       first_value(productname) over (partition by categoryid order by unitprice desc
+       ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) first,
+       last_value(productname) over (partition by categoryid order by unitprice desc
+       ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) last
+from products
+order by categoryid, unitprice desc;
+```
+
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
-```sql
-SELECT p.productid,
-       p.productname,
-       p.unitprice,
-       p.categoryid,
-       (SELECT top 1 productname
-        FROM products
-        WHERE categoryid = p.categoryid
-        ORDER BY unitprice DESC) AS first,
-       (SELECT top 1 productname
-        FROM products
-        WHERE categoryid = p.categoryid and unitprice = p.unitprice
-        ORDER BY unitprice ASC) as last
-FROM products p
-ORDER BY p.categoryid, p.unitprice DESC;
-```
+**Zapytania**
 
-Dla Postgresa i SQLite zamiast top 1 trzeba użyć limit 1
+_MS SQL_
 
 ```sql
-SELECT p.productid,
-       p.productname,
-       p.unitprice,
-       p.categoryid,
-       (SELECT  productname
-        FROM products
-        WHERE categoryid = p.categoryid
-        ORDER BY unitprice DESC limit 1) AS first,
-       (SELECT productname
-        FROM products
-        WHERE categoryid = p.categoryid and unitprice = p.unitprice
-        ORDER BY unitprice ASC limit 1) as last
-FROM products p
-ORDER BY p.categoryid, p.unitprice DESC;
+select p.productid, p.productname, p.unitprice, p.categoryid,
+       (select top 1 p2.productname from product_history p2 where p2.CategoryID=p.CategoryID
+       order by p2.UnitPrice desc) first,
+       (select top 1 p2.productname from product_history p2 where p2.CategoryID=p.CategoryID
+       order by p2.UnitPrice) last
+from product_history p
+order by p.categoryid, p.unitprice desc;
 ```
 
-Bez użycia funkcji okna możemy uzyskać wyniki których potrzebujemy.
+_PostgreSQL_
 
-**Wyniki, plany i czasy wykonania**
+```sql
+select p.productid, p.productname, p.unitprice, p.categoryid,
+       (select p2.productname from product_history p2 where p2.CategoryID=p.CategoryID
+       order by p2.UnitPrice desc limit 1) first,
+       (select p2.productname from product_history p2 where p2.CategoryID=p.CategoryID
+       order by p2.UnitPrice limit 1) last
+from product_history p
+order by p.categoryid, p.unitprice desc;
+```
 
-| MS SQL                     | Postgres                    | SQLite                    |
-| -------------------------- | --------------------------- | ------------------------- |
-| ![](./img/ex12/mysql1.png) | ![](img/ex12/postgres1.png) | ![](img/ex12/sqlite1.png) |
-| ![](./img/ex12/mysql2.png) | ![](img/ex12/postgres2.png) | ![](img/ex12/sqlite2.png) |
-| ![](./img/ex12/mysql3.png) | ![](img/ex12/postgres3.png) | ![](img/ex12/sqlite3.png) |
+_SQLite_
 
-> Funkcje okna składały się z prostszych, liniowych ciągów operacji, podczas gdy zagnieżdżone zapytania wiązały się z bardziej drzewiastą strukturą planu. Wszystkie wersje zapytania na tabeli products wykonały się błyskawicznie. Ze względu na szybkość zapytania nie uwzględniono SQLite z powodu braku analizy kosztu.
+```sql
+select p.productid, p.productname, p.unitprice, p.categoryid,
+       (select p2.productname from product_history p2 where p2.CategoryID=p.CategoryID
+       order by p2.UnitPrice desc limit 1) first,
+       (select p2.productname from product_history p2 where p2.CategoryID=p.CategoryID
+       order by p2.UnitPrice limit 1) last
+from product_history p
+order by p.categoryid, p.unitprice desc;
+```
+
+> Bez użycia funkcji okna możemy uzyskać wyniki których potrzebujemy.
+
+> W zadaniu tym należało użyć tabeli `product_history`, która posiada 2500 rekordów.
+
+**Czasy wykonania**
+
+| Zapytanie | MS SQL                         | Postgres                          | SQLite                          |
+| --------- | ------------------------------ | --------------------------------- | ------------------------------- |
+| 1         | ![](./img/ex12/mssql1time.png) | ![](./img/ex12/postgres1time.png) | ![](./img/ex12/sqlite1time.png) |
+| 2         | ![](./img/ex12/mssql2time.png) | ![](./img/ex12/postgres2time.png) | ![](./img/ex12/sqlite2time.png) |
+
+**Plany wykonania**
+
+| Zapytanie | MS SQL                         | Postgres                        | SQLite                        |
+| --------- | ------------------------------ | ------------------------------- | ----------------------------- |
+| 1         | ![](./img/ex12/mssql1plan.png) | ![](img/ex12/postgres1plan.png) | ![](img/ex12/sqlite1plan.png) |
+| 2         | ![](./img/ex12/mssql2plan.png) | ![](img/ex12/postgres2plan.png) | ![](img/ex12/sqlite2plan.png) |
+
+> Wydajność funkcji okna jest najlepsza we wszystkich przypadkach. Widać znaczną różnicę między PostgreSQL a SQLite. W przypadku MS SQL oba zapytania wykonują się szybko. PostgreSQL okazał się być najwolniejszą bazą danych.
+
+> Funkcje okna składały się z prostszych, liniowych ciągów operacji, podczas gdy zagnieżdżone zapytania wiązały się z bardziej drzewiastą strukturą planu. Wszystkie wersje zapytania na tabeli products wykonały się błyskawicznie.
+> Jeśli chodzi o koszt, to w przypadku funkcji okna jest on znacznie niższy dla wszystkich SZBD.
+
+> W przypadku MS SQL oraz zapytania bez funkcji okna, na planie zapytania widzimy 3 pełne skany tabeli oraz operację Nested Loops. Z pewnością wpływa to negatywnie na efektywność oraz końcowy czas wykonania zapytania. Mogłoby się wydawać, że bardziej rozgałęziony plan w tym przypadku w porównaniu do funkcji okna, która wykonuje operacje sekwencyjnie jest łatwiejszy do zrównoleglenia, jednak kosztowne operacje na tabeli sprawiają, że zapytanie bez funkcji okna wykonuje się wolniej. Dla porównania, zapytanie z funkcją okna wykonuje tylko jeden skan indeksu, co znacznie przyspiesza jego wykonanie.
 
 ---
 
@@ -1318,41 +1433,32 @@ Zbiór wynikowy powinien zawierać:
   - wartość tego zamówienia
 
 ```sql
+with Data as (
+    SELECT o.CustomerID as CustomerID, o.OrderID, o.OrderDate,
+    o.Freight+od.UnitPrice*od.Quantity-od.Discount as value
+    FROM orders AS o
+    JOIN orderdetails as od on od.OrderID = o.OrderID)
+
 SELECT
-    CustomerID,
-    OrderID,
-    OrderDate,
-    TotalOrderValue,
-    FIRST_VALUE(OrderID) OVER (PARTITION BY CustomerID, YEAR(OrderDate),
-    MONTH(OrderDate) ORDER BY TotalOrderValue ASC) AS LowestValueOrderID,
-    FIRST_VALUE(OrderDate) OVER (PARTITION BY CustomerID, YEAR(OrderDate),
-    MONTH(OrderDate) ORDER BY TotalOrderValue ASC) AS LowestValueOrderDate,
-    FIRST_VALUE(TotalOrderValue) OVER (PARTITION BY CustomerID,
-    YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue ASC) AS LowestValueOrderValue,
-    LAST_VALUE(OrderID) OVER (PARTITION BY CustomerID, YEAR(OrderDate),
-    MONTH(OrderDate) ORDER BY TotalOrderValue DESC) AS HighestValueOrderID,
-    LAST_VALUE(OrderDate) OVER (PARTITION BY CustomerID, YEAR(OrderDate),
-    MONTH(OrderDate) ORDER BY TotalOrderValue DESC) AS HighestValueOrderDate,
-    LAST_VALUE(TotalOrderValue) OVER (PARTITION BY CustomerID,
-    YEAR(OrderDate), MONTH(OrderDate) ORDER BY TotalOrderValue DESC) AS HighestValueOrderValue
-FROM (
-    SELECT
-        Orders.CustomerID,
-        Orders.OrderID,
-        Orders.OrderDate,
-        SUM(od.unitprice * od.quantity * (1 - od.discount)) OVER (PARTITION BY
-        Orders.OrderID)) + Orders.freight AS TotalOrderValue
-FROM Orders
-    JOIN [Order Details] as od ON Orders.OrderID = od.OrderID AS OrderSummary
+    d.CustomerID, d.OrderDate, d.OrderDate, d.value,
+    last_value(concat(d.OrderID,' ', d.OrderDate,' ', d.value)) over (partition by d.CustomerID order by d.value desc rows between unbounded preceding and unbounded following) min_value_order,
+    first_value(concat(d.OrderID,' ', d.OrderDate,' ', d.value)) over (partition by d.CustomerID order by d.value desc) max_value_order
+FROM Data as d
 ```
 
 **Wynik**
 
-| Postgres                     |
-| ---------------------------- |
-| ![](./img/ex13/postgres.png) |
+![](./img/ex13/postgres.png)
 
-> Działanie zapytania widać dla wierszy 5 i 6 - są to zapytania złożone w tym samym miesiącu.
+**Czas wykonania**
+
+![](./img/ex13/postgrestime.png)
+
+**Plan wykonania**
+
+![](./img/ex13/postgresplan.png)
+
+> Zapytanie zostało przetestowane dla MsSql, Postgres i SQLite, a czas wykonania wynosił około 0.5 sekundy. Nie zaobserwowano znaczących różnic w wydajności między poszczególnymi systemami baz danych.
 
 ---
 
@@ -1372,222 +1478,209 @@ Zbiór wynikowy powinien zawierać:
 - wartość sprzedaży produktu narastające od początku miesiąca
 
 ```sql
-SELECT
+with Data as (
+    SELECT
     id,
     productid,
     date,
-    value,
-    SUM(value) OVER (PARTITION BY productid, YEAR(date), MONTH(date) ORDER BY date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_value
-    from product_history
-ORDER by
-	productid,
-    YEAR(date),
-    MONTH(date),
-    date;
+    sum(unitprice*quantity) over(partition by productid,convert(date,date)) dayValue
+    FROM product_history
+)
+
+SELECT distinct
+    d.*,
+    sum(d.dayValue) over(partition by d.productid, year(d.date), month(d.date)
+    order by day(d.date) rows between unbounded preceding and current row) as accumulated
+FROM Data as d
+ORDER BY d.date
 ```
 
 **Wynik**
 
-| Postgres                      |
-| ----------------------------- |
-| ![](./img/ex14/postgres1.png) |
+![](./img/ex14/mssql1.png)
 
-Spróbuj wykonać zadanie bez użycia funkcji okna. Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki,
-czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
+> Warto zauważyć, że w w wyniku zapytania otrzymujemy 'powtórki'. Zapytanie zwraca nam po 3 takie same produkty na każdy dzień lecz z inną wartośćia accumulated. Nie wynika to z błedu, tylko z faktu, że tabela product_history została utworzona z takim błędem. Mimo wszystko logika zapytania jest poprawna i pozostaje taka sama. Wartość accumulated jest sumą wartości sprzedaży produktu od początku miesiąca.
 
-```sql
-SELECT
-    ph.id,
-    ph.productid,
-    ph.date,
-    ph.value,
-    (SELECT SUM(ph_inner.value)
-     FROM product_history ph_inner
-     WHERE ph_inner.productid = ph.productid
-     AND YEAR(ph_inner.date) = YEAR(ph.date)
-     AND MONTH(ph_inner.date) = MONTH(ph.date)
-     AND ph_inner.date <= ph.date) AS cumulative_value
-FROM
-    product_history ph
-ORDER BY
-    ph.productid,
-    YEAR(ph.date),
-    MONTH(ph.date),
-    ph.date;
-```
+Spróbuj wykonać zadanie bez użycia funkcji okna. Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
-wersja dla Postgres
+**Zapytania**
+
+_MS SQL_
 
 ```sql
-SELECT
-    ph.id,
-    ph.productid,
-    ph.date,
-    ph.value,
-    (SELECT SUM(ph_inner.value)
-     FROM product_history ph_inner
-     WHERE ph_inner.productid = ph.productid
-     AND extract (year from ph_inner.date) = extract (year from ph.date)
-     AND extract (month from ph_inner.date) = extract (month from ph.date)
-     AND ph_inner.date <= ph.date) AS cumulative_value
-FROM
-    product_history ph
-ORDER BY
-    ph.productid,
-    extract (year from ph.date),
-    extract (month from ph.date),
-    ph.date;
+with Data as (
+    SELECT
+    id,
+    productid,
+    date,
+    sum(unitprice*quantity) as dayValue
+    FROM product_history
+    WHERE productid = 1
+    GROUP BY productid, convert(date, date), id
+)
+
+SELECT distinct
+    d.*,
+    (SELECT sum(d2.dayValue)
+     FROM Data d2
+     WHERE d2.productid = d.productid and
+           year(d2.date) = year(d.date) and
+           month(d2.date) = month(d.date) and
+           day(d2.date) <= day(d.date)
+    ) AS accumulated
+FROM Data as d
+order by d.date
 ```
 
-Wersja dla SQLite
+_Postgres_
 
 ```sql
-SELECT
-    ph.id,
-    ph.productid,
-    ph.date,
-    ph.value,
-    (SELECT SUM(ph_inner.value)
-     FROM product_history ph_inner
-     WHERE ph_inner.productid = ph.productid
-       AND strftime('%Y',ph_inner.date) = strftime('%Y',ph.date)
-       AND strftime('%M',ph_inner.date) = strftime('%M',ph.date)
-       AND ph_inner.date <= ph.date) AS cumulative_value
-FROM
-    product_history ph
-ORDER BY
-    ph.productid,
-    strftime('%Y',ph.date),
-    strftime('%M',ph.date),
-    ph.date;
+with Data as (
+    SELECT
+    id,
+    productid,
+    date,
+    sum(unitprice*quantity) as dayValue
+    FROM product_history
+    GROUP BY productid, date, id
+)
+
+SELECT distinct
+    d.*,
+    sum(d2.dayValue) over(partition by d.productid, date_part('Year', d.date),
+    date_part('Month', d.date) order by date_part('Day', d.date) ) as accumulated
+FROM Data as d
+JOIN Data as d2 ON d.productid = d2.productid and
+                   date_part('Year', d.date) = date_part('Year', d2.date) and
+                   date_part('Month', d.date) = date_part('Month', d2.date) and
+                   date_part('Day', d.date) >= date_part('Day', d2.date)
+ORDER BY d.date
 ```
 
-> Dla żadnego SZBD zapytanie nie skończyło się w rozsądnym czasie, więc byliśmy zmuszeni do ogranizcenia ilości danych do 1000 wierszy. Brak wyników spowodowany jest użyciem bardzo dużego subquery.
+_SQLite_
 
-**Wyniki**
+```sql
+with Data as (
+    SELECT
+    id,
+    productid,
+    date,
+    sum(unitprice*quantity) as dayValue
+    FROM product_history
+    WHERE productid=1
+    GROUP BY productid, date, id
+)
 
-| MS SQL                     | Postgres                    | SQLite                    |
-| -------------------------- | --------------------------- | ------------------------- |
-| ![](./img/ex14/mysql1.png) | ![](img/ex14/postgres1.png) | ![](img/ex14/sqlite1.png) |
+SELECT
+    d.*,
+    sum(d2.dayValue) over(partition by d.productid, strftime('%Y %m', d.date)
+    order by strftime('%d', d.date) ) as accumulated
+FROM Data as d
+JOIN Data as d2 on d.productid = d2.productid and
+                   strftime('%Y %m', d.date) = strftime('%Y %m', d2.date) and
+                   strftime('%d', d.date) >= strftime('%d', d2.date)
+ORDER BY d.date
+```
+
+**Czasy wykonania**
+
+| Z funkcją okna lub bez | MS SQL                         | Postgres                          | SQLite                          |
+| ---------------------- | ------------------------------ | --------------------------------- | ------------------------------- |
+| Z funkcją okna         | ![](./img/ex14/mssql1time.png) | ![](./img/ex14/postgres1time.png) | ![](./img/ex14/sqlite1time.png) |
+| Bez funkcji okna       | 10 min + (przerwane)           | 10 min + (przerwane)              | 10 min + (przerwane)            |
 
 **Plany wykonania**
 
-| MS SQL                         | Postgres                        | SQLite                        |
-| ------------------------------ | ------------------------------- | ----------------------------- |
-| ![](./img/ex14/mysql1plan.png) | ![](img/ex14/postgres1plan.png) | ![](img/ex14/sqlite1plan.png) |
+| Z funkcją okna lub bez | MS SQL                         | Postgres                        | SQLite                        |
+| ---------------------- | ------------------------------ | ------------------------------- | ----------------------------- |
+| Z funkcją okna         | ![](./img/ex14/mssql1plan.png) | ![](img/ex14/postgres1plan.png) | ![](img/ex14/sqlite1plan.png) |
+| Bez funkcji okna       | ![](./img/ex14/mssql2plan.png) | ![](img/ex14/postgres2plan.png) | ![](img/ex14/sqlite2plan.png) |
 
-> Jak widzimy plan wykonania dla MS SQL jest znacznie bardziej rozbudowany niż dla SQLite czy Postgres. Można tez zauważyć różnicę w kosztach zapytań. Podzapytania te są bardzo skomplikowane, przez co ich koszt jest bardzo duży. Operacja filtrowania nie może być uproszczona i to powoduje wolne działanie całego zapytania.
+> Dla zapytania bez funkcji okna PostgreSQL wydaje się lepszy od SQL Servera pod względem równoległego wykonywania operacji ("Paralellism (Gather Streams)") w planie wykonania, co przekłada się na rzeczywisty czas wykonania. SQLite w tym przypadku nie radził sobie dobrze z zapytaniem o takim stopniu skomplikowania i takiej liczbie wierszy. Wynikowy czas wykonania zapytania z funkcją okna może być akceptowalny, ale już bez niej nie. Jeśli chodzi o zapytanie bez funkcji okna to mamy skany indeksów, osobne obliczanie skalarów i kosztowne agregacje.
 
 ---
 
 # Zadanie 15
 
-Wykonaj kilka "własnych" przykładowych analiz. Czy są jeszcze jakieś ciekawe/przydatne funkcje okna (z których nie
-korzystałeś w ćwiczeniu)? Spróbuj ich użyć w zaprezentowanych przykładach.
+Wykonaj kilka "własnych" przykładowych analiz. Czy są jeszcze jakieś ciekawe/przydatne funkcje okna (z których nie korzystałeś w ćwiczeniu)? Spróbuj ich użyć w zaprezentowanych przykładach.
 
-Napisz polecenie które pokaże id produktu, nazwę produktu, cenę produktu, kategorię produktu, oraz maksymalną cenę produktu w danej kategori.
+**Porównanie działania klauzuli `RANGE` z `ROWS`**
 
-Napisz polecenie z wykorzystaniem podzapytania, join'a oraz funkcji okna.
+**Zapytania**
 
-Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite).
-
-**1. Funkcje agregujące + order by**
-
-- Polecenie z wykorzystaniem podzapytania
+_Klauzula `RANGE`_
 
 ```sql
-SELECT p.productid, p.productname, p.unitprice, p.categoryid,
-       (SELECT MAX(p2.unitprice) FROM products p2 WHERE p2.categoryid = p.categoryid) AS maxprice
-FROM products p
-ORDER BY p.categoryid, p.unitprice;
-```
-
-- Polecenie z wykorzystaniem join
-
-```sql
-with max_price as (
-    select categoryid, max(unitprice) as MaxCategoryPrice
-    from products
-    group by categoryid
+WITH Data AS (
+    SELECT
+    o.customerid,
+    o.orderdate,
+    SUM(od.unitprice * od.quantity) as sum
+    FROM orders as o
+    LEFT JOIN orderdetails od ON o.orderid = od.orderid
+    GROUP BY o.customerid, o.orderdate
 )
 
-SELECT p.productid, p.productname, p.unitprice, p.categoryid, MaxCategoryPrice
-FROM products p
-         JOIN max_prices ON p.categoryid = max_price.categoryid
-ORDER BY p.categoryid, p.unitprice;
+SELECT customerid,
+       orderdate,
+       sum,
+       AVG(sum) OVER (
+           PARTITION BY customerid
+           ORDER BY orderdate ASC
+           RANGE BETWEEN INTERVAL '31' DAY PRECEDING AND CURRENT ROW
+           ) AS moving_avg
+FROM Data
 ```
 
-- Polecenie z wykorzystaniem funkcji okna
+_Klauzula `ROWS`_
 
 ```sql
-SELECT productid, productname, unitprice, categoryid,
-       max(unitprice) OVER (PARTITION BY categoryid) AS MaxCategoryPrice
-FROM products
-ORDER BY categoryid, unitprice;
+WITH Data AS (
+    SELECT
+    o.orderdate,
+    SUM(od.unitprice * od.quantity) as sum
+    FROM orders o
+    LEFT JOIN orderdetails od ON o.orderid = od.orderid
+    GROUP BY o.orderdate
+)
+
+SELECT orderdate,
+       SUM(sum) OVER (
+            ORDER BY orderdate
+            ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING
+            ) as sum_till_this_date
+FROM Data
 ```
+
+> Z wykorzystaniem klauzuli `RANGE` możemy zdefiniować zakres danych, który ma być brany pod uwagę podczas analizy. W tym konkretnym przypadku używamy tej klauzuli do obliczenia tzw. średniej kroczącej, czyli średniej z ostatnich 31 dni. Ponadto korzystamy z specjalnej konstrukcji obsługiwanej przez niektóre silniki baz danych a mianowicie `INTERVAL '31' DAY PRECEDING`.
+
+> Korzystając z klauzuli ROWS, analiza jest również wykonywana dla każdej kategorii produktu, ale zakres danych jest definiowany nieco inaczej, o czym mowa w kolejnym punkcie. Opisana funkcja sumuje zamówienia z wszystkich poprzednich dni oraz następnego dnia dla danego wiersza.
 
 **Wyniki**
 
-| Zapytanie    | MS SQL                     | Postgres                    | SQLite                    |
-| ------------ | -------------------------- | --------------------------- | ------------------------- |
-| Podzapytanie | ![](./img/ex15/mysql1.png) | ![](img/ex15/postgres1.png) | ![](img/ex15/sqlite1.png) |
-| Join         | ![](./img/ex15/mysql2.png) | ![](img/ex15/postgres2.png) | ![](img/ex15/sqlite2.png) |
-| Funkcja okna | ![](./img/ex15/mysql3.png) | ![](img/ex15/postgres3.png) | ![](img/ex15/sqlite3.png) |
-
-**Plany wykonania**
-
-| Zapytanie    | MS SQL                         | Postgres                        | SQLite                        |
-| ------------ | ------------------------------ | ------------------------------- | ----------------------------- |
-| Podzapytanie | ![](./img/ex15/mysql1plan.png) | ![](img/ex15/postgres1plan.png) | ![](img/ex15/sqlite1plan.png) |
-| Funkcja okna | ![](./img/ex15/mysql3plan.png) | ![](img/ex15/postgres3plan.png) | ![](img/ex15/sqlite3plan.png) |
-
-**Czasy wykonania**
-
-| Zapytanie    | MS SQL                         | Postgres                        | SQLite                        |
-| ------------ | ------------------------------ | ------------------------------- | ----------------------------- |
-| Podzapytanie | ![](./img/ex15/mysql1time.png) | ![](img/ex15/postgres1time.png) | ![](img/ex15/sqlite1time.png) |
-| Funkcja okna | ![](./img/ex15/mysql3time.png) | ![](img/ex15/postgres3time.png) | ![](img/ex15/sqlite3time.png) |
-
-**2. Funkcja okna z `ROWS BETWEEN 2 PRECEDING AND CURRENT ROW` pozwalająca skuteczenie liczyć średnie kroczące.**
-
-```sql
-WITH MonthlySales AS (
-  SELECT
-  productId,
-  date_trunc('month', orderdate) as OrderMonth,
-  SUM(Quantity * UnitPrice) AS TotalSales
-  FROM Orders
-    JOIN orderdetails ON Orders.OrderID = orderdetails.OrderID
-  GROUP BY ProductID, OrderMonth
-)
-SELECT
-  ProductID,
-  TO_CHAR(OrderMonth, 'YYYY-MM'),
-  TotalSales,
-  AVG(TotalSales) OVER(PARTITION BY ProductID ORDER BY OrderMonth
-  ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS MovingAvgSales
-FROM MonthlySales
-  WHERE productid = 1
-ORDER BY ProductID, OrderMonth;
-```
-
-**Wynik**
-
-| Postgres                      |
-| ----------------------------- |
-| ![](./img/ex15/postgres4.png) |
-
-**Plan wykonania**
-
-| Postgres                          |
-| --------------------------------- |
-| ![](./img/ex15/postgres4plan.png) |
+| Klauzula `RANGE`              | Klauzula `ROWS`               |
+| ----------------------------- | ----------------------------- |
+| ![](./img/ex15/postgres1.png) | ![](./img/ex15/postgres2.png) |
 
 **Czas wykonania**
 
-| Postgres                          |
-| --------------------------------- |
-| ![](./img/ex15/postgres4time.png) |
+| Klauzula `RANGE`                  | Klauzula `ROWS`                   |
+| --------------------------------- | --------------------------------- |
+| ![](./img/ex15/postgres1time.png) | ![](./img/ex15/postgres2time.png) |
+
+**Plany wykonania**
+
+| Klauzula `RANGE`                  | Klauzula `ROWS`                   |
+| --------------------------------- | --------------------------------- |
+| ![](./img/ex15/postgres1plan.png) | ![](./img/ex15/postgres2plan.png) |
+
+> Klauzula `ROWS` umożliwia określenie zakresu za pomocą liczby wierszy poprzedzających lub następujących po obecnym wierszu.
+
+> Z kolei klauzula `RANGE` pozwala określić ramkę za pomocą wartości wierszy poprzedzających lub następujących po obecnym wierszu. Z tego powodu klauzula `RANGE` wymaga podania dokładnie jednej kolumny, według której będziemy sortować tabelę.
+
+> Bardzo istotna uwaga! Jeśli nie używamy klauzuli ORDER BY to przetwarzana ramka jest równa: ROWS `BETWEEN UNBOUNDED PRECEDING AND UNOBUNDED FOLLOWING`, jeżeli skorzystliśmy z klauzuli ORDER BY to domyślnie jest to równoznaczne z `ROWS BETWEEN UNBOUNDED PREEDING AND CURRENT ROW`.
+
+> Możemu zauważyć, że czas wykonywania się klauzuli `ROWS` jest dużo szybszy niż Klasuzuli `RANGE`.
 
 Punktacja
 
