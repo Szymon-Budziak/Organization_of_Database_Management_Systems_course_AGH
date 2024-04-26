@@ -865,6 +865,7 @@ WITH RankedPrice AS (
 
 SELECT *
 FROM RankedPrice
+WHERE PriceRank <= 4
 ORDER BY Year, ProductID, PriceRank;
 ```
 
@@ -884,6 +885,7 @@ WITH RankedPrice AS (
 
 SELECT *
 FROM RankedPrice
+WHERE PriceRank <= 4
 ORDER BY Year, ProductID, PriceRank;
 ```
 
@@ -903,6 +905,7 @@ WITH RankedPrice AS (
 
 SELECT *
 FROM RankedPrice
+WHERE PriceRank <= 4
 ORDER BY Year, ProductID, PriceRank;
 ```
 
@@ -919,57 +922,99 @@ Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czas
 _MS SQL_
 
 ```sql
+WITH RankedPrice AS (
+    SELECT
+        YEAR(PH.Date) AS Year,
+        PH.ProductID,
+        P.ProductName,
+        PH.UnitPrice,
+        PH.Date AS PriceDate,
+        (
+            SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
+            FROM product_history AS PH2
+            WHERE YEAR(PH2.Date) = YEAR(PH.Date)
+                  AND PH2.ProductID = PH.ProductID
+                  AND PH2.UnitPrice > PH.UnitPrice
+        ) AS PriceRank
+    FROM product_history AS PH
+    INNER JOIN products AS P ON PH.ProductID = P.ProductID
+)
+
 SELECT
-    YEAR(PH.date) AS Year,
-    PH.ProductID,
-    PH.ProductName,
-    PH.UnitPrice,
-    (
-        SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
-        FROM product_history as PH2
-        WHERE YEAR(PH2.date) = YEAR(PH.date)
-              AND PH2.ProductID = PH.ProductID
-              AND PH2.UnitPrice > PH.UnitPrice
-    ) AS PriceRank
-FROM product_history as PH
+    Year,
+    ProductID,
+    ProductName,
+    UnitPrice AS Price,
+    PriceDate AS Date,
+    PriceRank
+FROM RankedPrice
+WHERE PriceRank <= 4
 ORDER BY Year, ProductID, PriceRank;
 ```
 
 _Postgres_
 
 ```sql
-SELECT
-    EXTRACT(year from PH.date) AS Year,
-    PH.ProductID,
-    PH.ProductName,
-    PH.UnitPrice,
-    (
-        SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
-        FROM product_history as PH2
-        WHERE EXTRACT(year from PH2.date) = EXTRACT(year from PH.date)
-              AND PH2.ProductID = PH.ProductID
-              AND PH2.UnitPrice > PH.UnitPrice
-    ) AS PriceRank
-FROM product_history as PH
+WITH RankedPrice AS (
+    SELECT
+        EXTRACT(year from PH.date) AS Year,
+        PH.ProductID,
+        P.ProductName,
+        PH.UnitPrice,
+        PH.Date AS PriceDate,
+        (
+            SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
+            FROM product_history AS PH2
+            WHERE EXTRACT(year from PH2.date) = YEAR(PH.Date)
+                  AND PH2.ProductID = PH.ProductID
+                  AND PH2.UnitPrice > PH.UnitPrice
+        ) AS PriceRank
+    FROM product_history AS PH
+    INNER JOIN products AS P ON PH.ProductID = P.ProductID
+)
+
+SELECT 
+    Year,
+    ProductID,
+    ProductName,
+    UnitPrice AS Price,
+    PriceDate AS Date,
+    PriceRank
+FROM RankedPrice
+WHERE PriceRank <= 4
 ORDER BY Year, ProductID, PriceRank;
 ```
 
 _SQLite_
 
 ```sql
-SELECT
-    strftime('%Y', PH.date) AS Year,
-    PH.ProductID,
-    PH.ProductName,
-    PH.UnitPrice,
-    (
-        SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
-        FROM product_history as PH2
-        WHERE strftime('%Y', PH2.date) = strftime('%Y', PH.date)
+WITH RankedPrice AS (
+    SELECT
+        strftime('%Y',  PH.date) AS Year,
+        PH.ProductID,
+        P.ProductName,
+        PH.UnitPrice,
+        PH.Date AS PriceDate,
+        (
+            SELECT COUNT(DISTINCT PH2.UnitPrice) + 1
+            FROM product_history AS PH2
+            WHERE strftime('%Y',  PH2.date) = strftime('%Y', PH.Date)
               AND PH2.ProductID = PH.ProductID
               AND PH2.UnitPrice > PH.UnitPrice
-    ) AS PriceRank
-FROM product_history as PH
+        ) AS PriceRank
+    FROM product_history AS PH
+             INNER JOIN products AS P ON PH.ProductID = P.ProductID
+)
+
+SELECT
+    Year,
+    ProductID,
+    ProductName,
+    UnitPrice AS Price,
+    PriceDate AS Date,
+    PriceRank
+FROM RankedPrice
+WHERE PriceRank <= 4
 ORDER BY Year, ProductID, PriceRank;
 ```
 
@@ -1030,7 +1075,7 @@ order by date;
 | -------------------------- |
 | ![](./img/ex10/mssql0.png) |
 
-> Funckje `lag` i `lead` pozwalają na dostęp do wartości odpowiednio z poprzednich i kolejnych wierszy. Mogą być przydatne by porównywać wartości w różnych punktach czasu. Zastosowanie funkcji `lag(unitprice)` umożliwia pobranie ceny produktu z poprzedniego rekordu, posortowanego według daty, natomiast funkcja `lead(unitprice)` zwraca cenę produktu z następnego rekordu. Dzięki nim można porównywać bieżące wartości z cenami poprzednimi lub następnymi w uporządkowanym zestawie danych.
+> Funckje `lag` i `lead` pozwalają na dostęp do wartości odpowiednio z poprzednich i kolejnych wierszy. Mogą być przydatne by porównywać wartości w różnych punktach czasu. Zastosowanie funkcji `lag(unitprice)` umożliwia pobranie ceny produktu z poprzedniego rekordu, które przez użycie funkcji okna i w niej order by date są posortowane według daty. Natomiast funkcja `lead(unitprice)` zwraca cenę produktu z następnego rekordu. Dzięki nim można porównywać bieżące wartości z cenami poprzednimi lub następnymi w uporządkowanym zestawie danych.
 
 Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
@@ -1135,7 +1180,7 @@ ORDER BY date;
 
 > W tym zadaniu, konieczne było skorzystanie z tabeli `product_history`, która posiada 2500 rekordów.
 
-> Zapytania z funkcjami okna wykonują się znacznie szybciej, są prostrze, czytelniejsze i bardziej zwięzłe. Zapytania bez funkcji okna są bardziej skomplikowane, wymagają złączeń oraz podzapytań, co sprawia, że są mniej czytelne i trudniejsze do zrozumienia. Zapytania z użyciem funkcji okna mają również wielokrotnie mniejszy koszt wykonania i prostszy plan wykonania niż ich odpowiedniki bez funkcji okna.
+> Zapytania z funkcjami okna wykonują się znacznie szybciej, są prostrze, czytelniejsze i bardziej zwięzłe. Zapytania bez funkcji okna są bardziej skomplikowane, wymagają złączeń oraz podzapytań, co sprawia, że są mniej czytelne. Zapytania z użyciem funkcji okna mają również wielokrotnie mniejszy koszt wykonania i prostszy plan wykonania niż ich odpowiedniki bez funkcji okna.
 
 > W PostgreSQL i SQLite zauważalne jest nieznaczne przyspieszenie zapytań wykorzystujących funkcje okna w porównaniu z ich odpowiednikami, które nie korzystają z tych funkcji. Natomiast w przypadku SQL Servera zapytania bez funkcji okna są nieco szybsze niż te z ich użyciem.
 
@@ -1296,7 +1341,7 @@ order by p.categoryid, p.unitprice desc;
 > Funkcje okna składały się z prostszych, liniowych ciągów operacji, podczas gdy zagnieżdżone zapytania wiązały się z bardziej drzewiastą strukturą planu. Wszystkie wersje zapytania na tabeli products wykonały się błyskawicznie.
 > Jeśli chodzi o koszt, to w przypadku funkcji okna jest on znacznie niższy dla wszystkich SZBD.
 
-> W przypadku MS SQL plan zapytań jest bardziej rozgałęziony przez co jest łatwiejszy do zwrównoleglenia, co może być przyczyną szybszego czasu wykonania. Również koszt dla tego SZBD wykorzystującym funkcje okna jest wielokrotnie niższy.
+> W przypadku MS SQL oraz zapytania bez funkcji okna, na planie zapytania widzimy 3 pełne skany tabeli oraz operację Nested Loops. Z pewnością wpływa to negatywnie na efektywność oraz końcowy czas wykonania zapytania. Mogłoby się wydawać, że bardziej rozgałęziony plan w tym przypadku w porównaniu do funkcji okna, która wykonuje operacje sekwencyjnie jest łatwiejszy do zrównoleglenia, jednak kosztowne operacje na tabeli sprawiają, że zapytanie bez funkcji okna wykonuje się wolniej. Dla porównania, zapytanie z funkcją okna wykonuje tylko jeden skan indeksu, co znacznie przyspiesza jego wykonanie.
 
 ---
 
@@ -1387,6 +1432,8 @@ ORDER BY d.date
 **Wynik**
 
 ![](./img/ex14/mssql1.png)
+
+> Warto zauważyć, że w w wyniku zapytania otrzymujemy 'powtórki'. Zapytanie zwraca nam po 3 takie same produkty na każdy dzień lecz z inną wartośćia accumulated. Nie wynika to z błedu, tylko z faktu, że tabela product_history została utworzona z takim błędem. Mimo wszystko logika zapytania jest poprawna i pozostaje taka sama. Wartość accumulated jest sumą wartości sprzedaży produktu od początku miesiąca.
 
 Spróbuj wykonać zadanie bez użycia funkcji okna. Spróbuj uzyskać ten sam wynik bez użycia funkcji okna, porównaj wyniki, czasy i plany zapytań. Przetestuj działanie w różnych SZBD (MS SQL Server, PostgreSql, SQLite)
 
@@ -1483,7 +1530,7 @@ ORDER BY d.date
 | Z funkcją okna         | ![](./img/ex14/mssql1plan.png) | ![](img/ex14/postgres1plan.png) | ![](img/ex14/sqlite1plan.png) |
 | Bez funkcji okna       | ![](./img/ex14/mssql2plan.png) | ![](img/ex14/postgres2plan.png) | ![](img/ex14/sqlite2plan.png) |
 
-> Dla zapytania bez funkcji okna PostgreSQL wydaje się lepszy od SQL Servera pod względem równoległego wykonywania operacji w planie wykonania, co przekłada się na rzeczywisty czas wykonania. SQLite w tym przypadku nie radził sobie dobrze z zapytaniem o takim stopniu skomplikowania i takiej liczbie wierszy. Wynikowy czas wykonania zapytania z funkcją okna może być akceptowalny, ale już bez niej nie.
+> Dla zapytania bez funkcji okna PostgreSQL wydaje się lepszy od SQL Servera pod względem równoległego wykonywania operacji ("Paralellism (Gather Streams)") w planie wykonania, co przekłada się na rzeczywisty czas wykonania. SQLite w tym przypadku nie radził sobie dobrze z zapytaniem o takim stopniu skomplikowania i takiej liczbie wierszy. Wynikowy czas wykonania zapytania z funkcją okna może być akceptowalny, ale już bez niej nie. Jeśli chodzi o zapytanie bez funkcji okna to mamy skany indeksów, osobne obliczanie skalarów i kosztowne agregacje.
 
 ---
 
@@ -1563,9 +1610,9 @@ FROM Data
 
 > Klauzula `ROWS` umożliwia określenie zakresu za pomocą liczby wierszy poprzedzających lub następujących po obecnym wierszu.
 
-> Z kolei klauzula `RANGE` pozwala określić ramkę za pomocą artości wierszy poprzedzających lub następujących po obecnym wierszu. Z tego powodu klauzula RANGE wymaga podania dokładnie jednej kolumny, według której będziemy sortować tabelę.
+> Z kolei klauzula `RANGE` pozwala określić ramkę za pomocą wartości wierszy poprzedzających lub następujących po obecnym wierszu. Z tego powodu klauzula `RANGE` wymaga podania dokładnie jednej kolumny, według której będziemy sortować tabelę.
 
-> Bardzo istotną uwagą jest, żejeśli nie używamy klauzuli ORDER BY to przetwarzane ramka jest równa: ROWS `BETWEEN UNBOUNDED PRECEDING AND UNOBUNDED FOLLOWING`, jeżeli skorzystliśmy z klauzuli ORDER BY to domyślnie jest to równoznaczne z `ROWS BETWEEN UNBOUNDED PREEDING AND CURRENT ROW`.
+> Bardzo istotna uwaga! Jeśli nie używamy klauzuli ORDER BY to przetwarzana ramka jest równa: ROWS `BETWEEN UNBOUNDED PRECEDING AND UNOBUNDED FOLLOWING`, jeżeli skorzystliśmy z klauzuli ORDER BY to domyślnie jest to równoznaczne z `ROWS BETWEEN UNBOUNDED PREEDING AND CURRENT ROW`.
 
 > Możemu zauważyć, że czas wykonywania się klauzuli `ROWS` jest dużo szybszy niż Klasuzuli `RANGE`.
 
