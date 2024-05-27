@@ -66,8 +66,14 @@ US_INTERSTATES
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_interstates;
 ```
+
+Widzimy, że narzędzie nie wyświetla dróg poprawnie. Szybkie przybliżenie i oddalenie wizualizacji przy pomocy myszy odświeża obraz i artefakty znikają.
+
+![](img/ex1/us_interstates.png)
+![](img/ex1/us_interstates2.png)
 
 
 US_CITIES
@@ -76,9 +82,15 @@ US_CITIES
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_cities;
 ```
 
+Można zauważyć, że markery są bardzo duże. Niestety próby zmiany parametru `Marker width` nie wpływają na rozmiar wyglądających. 
+![](img/ex1/us_cities.png)
+
+`Marker fill color` oraz `Marker border color` działają poprawnie.
+![](img/ex1/us_cities2.png)
 
 US_RIVERS
 
@@ -86,8 +98,11 @@ US_RIVERS
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_rivers;
 ```
+
+![](img/ex1/us_rivers.png)
 
 
 US_COUNTIES
