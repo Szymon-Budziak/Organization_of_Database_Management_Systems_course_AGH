@@ -53,8 +53,11 @@ US_STATES
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from world_countries;
+select * from us_states;
 ```
+
+![](img/ex1/us_states.png)
 
 
 US_INTERSTATES
