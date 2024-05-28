@@ -111,9 +111,11 @@ US_COUNTIES
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_counties;
 ```
 
+![](img/ex1/us_counties.png)
 
 US_PARKS
 
@@ -121,9 +123,18 @@ US_PARKS
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_parks
+where id < 50;
 ```
 
+![](img/ex1/us_parks.png)
+
+Jesteśmy w stanie zaobserwować najwięcej parków w stanie alabama. Domyślnie narzędzie ustawia ich kolor jako żółty, stają się one lepiej widoczne po zmianie koloru
+
+![](img/ex1/us_parks2.png)
+
+Parki nie są jednak dobrze widoczne na skali całego kraju. 
 
 # Zadanie 2
 
