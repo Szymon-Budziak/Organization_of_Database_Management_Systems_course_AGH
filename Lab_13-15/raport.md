@@ -104,6 +104,8 @@ select * from us_rivers;
 
 ![](img/ex1/us_rivers.png)
 
+Możemy zaobserwować, że jeziora na północnym wschodzie są oznaczone na czarno mimo, że nie są rzekami. Są to linie w których jeziora te stykają się z brzegiem Kanady.
+
 
 US_COUNTIES
 
