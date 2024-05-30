@@ -86,7 +86,7 @@ select * from us_states;
 select * from us_cities;
 ```
 
-Można zauważyć, że markery są bardzo duże. Niestety próby zmiany parametru `Marker width` nie wpływają na rozmiar wyglądających. 
+Można zauważyć, że markery są bardzo duże. Niestety próby zmiany parametru `Marker width` nie wpływają na rozmiar widocznych markerów.
 ![](img/ex1/us_cities.png)
 
 `Marker fill color` oraz `Marker border color` działają poprawnie.
@@ -104,7 +104,7 @@ select * from us_rivers;
 
 ![](img/ex1/us_rivers.png)
 
-Możemy zaobserwować, że jeziora na północnym wschodzie są oznaczone na czarno mimo, że nie są rzekami. Są to linie w których jeziora te stykają się z brzegiem Kanady.
+Możemy zaobserwować, że jeziora na północnym wschodzie są oznaczone na czarno mimo, że nie są rzekami. Są to linie w których jeziora te stykają się z granicą Kanady.
 
 
 US_COUNTIES
@@ -132,11 +132,31 @@ where id < 50;
 
 ![](img/ex1/us_parks.png)
 
-Jesteśmy w stanie zaobserwować najwięcej parków w stanie alabama. Domyślnie narzędzie ustawia ich kolor jako żółty, stają się one lepiej widoczne po zmianie koloru
+Przez ograniczenie wartości ID do mniejszych niż 50, esteśmy w stanie zaobserwować głównie parki w stanie Alabama. Domyślnie narzędzie ustawia ich kolor jako żółty, stają się one lepiej widoczne po zmianie koloru.
 
 ![](img/ex1/us_parks2.png)
 
 Parki nie są jednak dobrze widoczne na skali całego kraju. 
+
+Możemy sprwadzić w tabeli nazwę parku Yellowstone i w ten sposób stworzyć zapytanie, które pozwoli wyświetlić go na mapie
+
+```sql
+select * from us_parks
+order by NAME;
+```
+
+ID Yellowstone to 5348
+
+![](img/ex1/us_parks3.png)
+
+```sql
+select * from us_states;
+select * from us_parks
+where ID = 5348;
+```
+
+![](img/ex1/us_parks4.png)
+
 
 # Zadanie 2
 
