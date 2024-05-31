@@ -168,49 +168,50 @@ prostokąt
 
 ```sql
 SELECT  sdo_geometry (2003, 8307, null,
-sdo_elem_info_array (1,1003,3),
-sdo_ordinate_array ( -117.0, 40.0, -90., 44.0)) g
+        sdo_elem_info_array (1,1003,3),
+        sdo_ordinate_array ( -117.0, 40.0, -90., 44.0)) g
 FROM dual
 ```
 
-
-
 > Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
-```
+> Wyświetlenie geometrii razem z wynikiem:
 
+![](img/ex2/1.png)
+
+> Jest to zwykły prostokat.
 
 Użyj funkcji SDO_FILTER
 
 ```sql
 SELECT state, geom FROM us_states
 WHERE sdo_filter (geom,
-sdo_geometry (2003, 8307, null,
-sdo_elem_info_array (1,1003,3),
-sdo_ordinate_array ( -117.0, 40.0, -90., 44.0))
+    sdo_geometry (2003, 8307, null,
+    sdo_elem_info_array (1,1003,3),
+    sdo_ordinate_array ( -117.0, 40.0, -90., 44.0))
 ) = 'TRUE';
 ```
 
 Zwróć uwagę na liczbę zwróconych wierszy (16)
 
-
 > Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
-```
+![](img/ex2/2.png)
 
+> Wyswietlenie geometrii z sdo_filter razem z wczesniejsza oraz z wynikiem:
+
+![](img/ex2/3.png)
+
+> Mozemy zauwazyc, ze rzeczywiscie zostalo zwrocone 16 wierszy. 2 stany zostały błędnie zakwalifikowane jako pokrywające się z prostokątem. Dokumentacja wskazuje, że funkcja SDO_FILTER, w przeciwieństwie do SDO_ANYINTERACT, służy do szybkiego filtrowania danych, a nie do dokładnego sprawdzania pokrywania się geometrii.
 
 Użyj funkcji  SDO_ANYINTERACT
 
 ```sql
 SELECT state, geom FROM us_states
 WHERE sdo_anyinteract (geom,
-sdo_geometry (2003, 8307, null,
-sdo_elem_info_array (1,1003,3),
-sdo_ordinate_array ( -117.0, 40.0, -90., 44.0))
+    sdo_geometry (2003, 8307, null,
+    sdo_elem_info_array (1,1003,3),
+    sdo_ordinate_array ( -117.0, 40.0, -90., 44.0))
 ) = 'TRUE';
 ```
 
@@ -218,12 +219,25 @@ Porównaj wyniki sdo_filter i sdo_anyinteract
 
 Pokaż wynik na mapie
 
-
 > Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
-```
+![](img/ex2/4.png)
+
+> Wyswietlenie geometrii otrzymanej z sdo_anyinteract razem z wczesniejszymi oraz z wynikiem:
+
+![](img/ex2/5.png)
+
+> Zapytanie to zwróciło 14 stanów, co jest poprawna liczbą.
+
+> Porownanie wynikow obu zapytań, sdo_filter na zolto i sdo_anyinteract na czerwono: 
+
+![](img/ex2/6.png)
+
+**Analiza wynikow:**
+ - Zapytanie z użyciem sdo_filter zwróciło 16 wierszy, co jest o 2 więcej niż w przypadku zapytania z użyciem sdo_anyinteract
+ - W obu wynikach zapytań pokrywa się 14 stanów.
+ - Patrząc na mapę wyświetloną w Oracle SQL Developer, wydaje się, że 2 dodatkowe stany zwrócone przez sdo_filter nie mają punktów wspólnych z geometrią (prostokątem).
+ - Różnica ta wynika z tego, że funkcja sdo_filter korzysta z **Minimum Bounding Rectangle (MBR)**, czyli wyznacza najmniejszy prostokąt, w który można wpisać daną figurę niebędącą prostokątem, i dopiero na tych prostokątach sprawdza, czy się przecinają. Zaletą tego podejścia jest prostsze i mniej kosztowne obliczanie (szczególnie dla skomplikowanych kształtów), dlatego jest stosowane do wstępnego filtrowania danych. Wadą jest zwracanie fałszywie pozytywnych wyników, tak jak w naszym przypadku z dwoma dodatkowymi stanami.
 
 # Zadanie 3
 
@@ -233,9 +247,10 @@ Użyj funkcji SDO_INSIDE
 
 ```sql
 SELECT p.name, p.geom
-FROM us_parks p, us_states s
+FROM us_parks p,
+     us_states s
 WHERE s.state = 'Wyoming'
-AND SDO_INSIDE (p.geom, s.geom ) = 'TRUE';
+     AND SDO_INSIDE (p.geom, s.geom ) = 'TRUE';
 ```
 
 W przypadku wykorzystywania narzędzia SQL Developer, w celu wizualizacji na mapie użyj podzapytania
@@ -250,7 +265,6 @@ WHERE id IN
     and SDO_INSIDE (p.geom, s.geom ) = 'TRUE'
 )
 ```
-
 
 
 > Wyniki, zrzut ekranu, komentarz
