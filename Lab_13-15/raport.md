@@ -345,13 +345,71 @@ AND SDO_RELATE ( c.geom,s.geom, 'mask=COVEREDBY') = 'TRUE';
 
 W przypadku wykorzystywania narzędzia SQL Developer, w celu wizualizacji danych na mapie należy użyć podzapytania (podobnie jak w poprzednim zadaniu)
 
-
-
 > Wyniki, zrzut ekranu, komentarz
 
+Mapa z fragmentem na którym widać New Hampshire.
+
 ```sql
---  ...
+Select * from us_states
+WHERE state = 'New Hampshire';
 ```
+
+![](img/ex4/new_hampshire.png)
+
+
+Zobaczmy jak wygląda wynik pierwszego zapytania - z maską `INSIDE+COVEREDBY`
+
+```sql
+SELECT cc.county, cc.state_abrv, cc.geom FROM us_counties cc
+WHERE id IN
+(
+    SELECT c.id
+    FROM us_counties c, us_states s
+    WHERE s.state = 'New Hampshire'
+    AND SDO_RELATE ( c.geom,s.geom, 'mask=INSIDE+COVEREDBY') = 'TRUE'
+);
+```
+
+Widzimy, że cały stan jest pokryty fragmentami - hrabstwami. 
+
+![](img/ex4/inside_coveredby.png)
+
+Sprwadźmy drugie zapytanie - maskę `INSIDE`.
+
+```sql
+SELECT cc.county, cc.state_abrv, cc.geom FROM us_counties cc
+WHERE id IN
+(
+    SELECT c.id
+    FROM us_counties c, us_states s
+    WHERE s.state = 'New Hampshire'
+    AND SDO_RELATE ( c.geom,s.geom, 'mask=INSIDE') = 'TRUE'
+);
+```
+
+`INSIDE` powoduje wybranie tylko tych hrabstw które w całości znajdują się w stanie.
+
+![](img/ex4/inside.png)
+
+Trzecie zapytanie - maska `COVEREDBY`
+
+```sql
+SELECT cc.county, cc.state_abrv, cc.geom FROM us_counties cc
+WHERE id IN
+(
+    SELECT c.id
+    FROM us_counties c, us_states s
+    WHERE s.state = 'New Hampshire'
+    AND SDO_RELATE ( c.geom,s.geom, 'mask=COVEREDBY') = 'TRUE'
+);
+```
+
+Widzimy, że tylko te hrabstwa które stykają się z granicą stanu zostają wybrane
+
+![](img/ex4/coveredby.png)
+
+Z obserwacji można wyciągnąć wnioski o masce `COVEREDBY` - nie uwzględnia ona elementów całkowicie zawartych wewnątrz stanu New Hampshire. Oznacza to, że żeby coś zostało przez nią uwzględnione musi mieć część wspólną z obszarem na zewnątrz stanu. W tym przypadku tą częścią wspólną jest granica.
+
 
 # Zadanie 5
 
