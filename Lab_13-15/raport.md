@@ -53,8 +53,11 @@ US_STATES
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from world_countries;
+select * from us_states;
 ```
+
+![](img/ex1/us_states.png)
 
 
 US_INTERSTATES
@@ -63,8 +66,14 @@ US_INTERSTATES
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_interstates;
 ```
+
+Widzimy, że narzędzie nie wyświetla dróg poprawnie. Szybkie przybliżenie i oddalenie wizualizacji przy pomocy myszy odświeża obraz i artefakty znikają.
+
+![](img/ex1/us_interstates.png)
+![](img/ex1/us_interstates2.png)
 
 
 US_CITIES
@@ -73,9 +82,15 @@ US_CITIES
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_cities;
 ```
 
+Można zauważyć, że markery są bardzo duże. Niestety próby zmiany parametru `Marker width` nie wpływają na rozmiar widocznych markerów.
+![](img/ex1/us_cities.png)
+
+`Marker fill color` oraz `Marker border color` działają poprawnie.
+![](img/ex1/us_cities2.png)
 
 US_RIVERS
 
@@ -83,8 +98,13 @@ US_RIVERS
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_rivers;
 ```
+
+![](img/ex1/us_rivers.png)
+
+Możemy zaobserwować, że jeziora na północnym wschodzie są oznaczone na czarno mimo, że nie są rzekami. Są to linie w których jeziora te stykają się z granicą Kanady.
 
 
 US_COUNTIES
@@ -93,9 +113,11 @@ US_COUNTIES
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_counties;
 ```
 
+![](img/ex1/us_counties.png)
 
 US_PARKS
 
@@ -103,8 +125,37 @@ US_PARKS
 > Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states;
+select * from us_parks
+where id < 50;
 ```
+
+![](img/ex1/us_parks.png)
+
+Przez ograniczenie wartości ID do mniejszych niż 50, esteśmy w stanie zaobserwować głównie parki w stanie Alabama. Domyślnie narzędzie ustawia ich kolor jako żółty, stają się one lepiej widoczne po zmianie koloru.
+
+![](img/ex1/us_parks2.png)
+
+Parki nie są jednak dobrze widoczne na skali całego kraju. 
+
+Możemy sprwadzić w tabeli nazwę parku Yellowstone i w ten sposób stworzyć zapytanie, które pozwoli wyświetlić go na mapie
+
+```sql
+select * from us_parks
+order by NAME;
+```
+
+ID Yellowstone to 5348
+
+![](img/ex1/us_parks3.png)
+
+```sql
+select * from us_states;
+select * from us_parks
+where ID = 5348;
+```
+
+![](img/ex1/us_parks4.png)
 
 
 # Zadanie 2
