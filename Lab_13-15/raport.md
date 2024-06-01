@@ -259,33 +259,37 @@ W przypadku wykorzystywania narzędzia SQL Developer, w celu wizualizacji na map
 SELECT pp.name, pp.geom  FROM us_parks pp
 WHERE id IN
 (
-    SELECT p.id
-    FROM us_parks p, us_states s
-    WHERE s.state = 'Wyoming'
-    and SDO_INSIDE (p.geom, s.geom ) = 'TRUE'
+    SELECT p.id
+    FROM us_parks p, us_states s
+    WHERE s.state = 'Wyoming'
+    and SDO_INSIDE (p.geom, s.geom ) = 'TRUE'
 )
 ```
 
-
 > Wyniki, zrzut ekranu, komentarz
 
+Same parki z podzapytania nie dają nam dużo informacji.
+
+![](img/ex3/just_nps.png)
+
+Wyświetlmy je na mapie USA.
+
 ```sql
---  ...
+select * from us_states;
 ```
 
+![](img/ex3/nps_and_states.png)
+
+Dodajmy stan Wyoming i zaznaczmy go innym kolorem w celu rozróżnienia.
 
 ```sql
 SELECT state, geom FROM us_states
 WHERE state = 'Wyoming'
 ```
 
-
-
 > Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
-```
+![](img/ex3/wyoming_nps_and_state.png)
 
 
 Porównaj wynik z:
@@ -299,14 +303,24 @@ AND SDO_ANYINTERACT (p.geom, s.geom ) = 'TRUE';
 
 W celu wizualizacji użyj podzapytania
 
-
-
 > Wyniki, zrzut ekranu, komentarz
 
+Podzapytanie umożliwiające wizualizację:
+
 ```sql
---  ...
+SELECT pp.name, pp.geom FROM us_parks pp
+WHERE id IN
+(
+    SELECT p.id
+    FROM us_parks p, us_states s
+    WHERE s.state = 'Wyoming'
+    AND SDO_ANYINTERACT (p.geom, s.geom ) = 'TRUE'
+)
 ```
 
+Widzimy, dużo więcej parków. Na przykład widoczny park Yellowstone wcześniej nie był widoczny na mapie. Można wyciągnąć wniosek, że funkcja `SDO_INSIDE` pozwala na wyodrębnienie tylko tych elementów geometrycznych, które w całości znajdują się wewnątrz wybranego obszaru i nie dotykają jego granic. Zato `SDO_ANYINTERACT` wyodrębnia też obszary częściowo nachodzące na wybrany oraz te przyległe do niego.
+
+![](img/ex3/interactions.png)
 
 # Zadanie 4
 
