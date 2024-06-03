@@ -439,32 +439,163 @@ AND sdo_within_distance (c.location, i.geom,'distance=50 unit=mile'
 
 > Wyniki, zrzut ekranu, komentarz
 
+Musieliśmy zmodyfikować ostatnie zapytanie:
 ```sql
---  ...
+SELECT c.city, c.state_abrv, c.location 
+FROM us_cities c
+WHERE ROWID IN(
+SELECT c.rowid
+FROM us_interstates i, us_cities c
+WHERE i.interstate = 'I4'
+ AND sdo_within_distance(c.location, i.geom, 'distance=50 unit=mile') = 'TRUE')
 ```
+Na wizualizacji możemy zobaczyć wyraźnie drogę i trzy miasta w odpowiedniej odległości
 
+
+
+![](img/ex5/cities_near_I4.png)
 
 Dodatkowo:
 
 a)     Znajdz wszystkie jednostki administracyjne przez które przechodzi droga I4
 
+W celu określienia wszystkich jednostek administracyjnych przez które przechodzi droga wystarczy zmniejszyć dystans do wartości 0.
+
+```sql
+SELECT c.county, c.geom
+FROM us_counties c
+WHERE c.state_abrv = 'FL' 
+and c.id IN(
+SELECT c.id
+FROM us_interstates i, us_counties c
+WHERE i.interstate = 'I4'
+AND sdo_within_distance(c.geom, i.geom, 'distance=0 unit=mile') = 'TRUE'
+)
+```
+
+![](img/ex5/counties_exact.png)
+
 b)    Znajdz wszystkie jednostki administracyjne w pewnej odległości od I4
+
+```sql
+SELECT c.county, c.geom
+FROM us_counties c
+WHERE c.state_abrv = 'FL' 
+and c.id IN(
+SELECT c.id
+FROM us_interstates i, us_counties c
+WHERE i.interstate = 'I4'
+AND sdo_within_distance(c.geom, i.geom, 'distance=50 unit=mile') = 'TRUE'
+)
+```
+
+![](img/ex5/counties.png)
 
 c)     Znajdz rzeki które przecina droga I4
 
+Możemy zastosować podejście z podpunktu a)
+
+```SQL
+SELECT r.name, r.geom
+FROM us_rivers r
+WHERE r.id IN(
+SELECT r.id
+FROM us_interstates i, us_rivers r
+WHERE i.interstate = 'I4'
+AND sdo_within_distance(r.geom, i.geom, 'distance=0 unit=mile') = 'TRUE'
+)
+```
+
+St. Jones jest jedyną rzeką która przecina się z drogą I4
+
+![](img/ex5/river.png)
+
 d)    Znajdz wszystkie drogi które przecinają rzekę Mississippi
+
+W wyborze stanów do wizualizacji pomijamy Alaskę.
+
+```sql
+SELECT * FROM us_states
+where state != 'Alaska';
+
+SELECT * FROM us_rivers
+WHERE name = 'Mississippi';
+
+SELECT i.interstate, i.geom
+FROM us_interstates i
+WHERE i.id IN(
+SELECT i.id
+FROM us_interstates i, us_rivers r
+WHERE r.name = 'Mississippi'
+AND sdo_within_distance(r.geom, i.geom, 'distance=0 unit=mile') = 'TRUE'
+);
+```
+Widzimy, że drogi które przecinają Mississippi rozciągają się na całą szerokość kraju.
+
+![](img/ex5/mississippi.png)
+
+Niektóre drogi wyglądają jakby nie przecinały się z rzeką, ale kiedy najedziemy myszą na taką drogę możemy zobaczyć, że jest to poprostu nieciągłość między jej odcinkami.
+
+![](img/ex5/mississippi_closeup.png)
 
 e)    Znajdz wszystkie miasta w odlegości od 15 do 30 mil od drogi 'I275'
 
-f)      Itp. (własne przykłady)
-
-
-> Wyniki, zrzut ekranu, komentarz
-> (dla każdego z podpunktów)
+Funkcji `sdo_within_distance` nie można użyć z opcją `'FALSE'` więc poprostu zaprzeczamy jej użycie z `'TRUE'`
 
 ```sql
---  ...
+SELECT c.city, c.state_abrv, c.location 
+FROM us_cities c
+WHERE ROWID IN(
+SELECT c.rowid
+FROM us_interstates i, us_cities c
+WHERE i.interstate = 'I275'
+ AND sdo_within_distance(c.location, i.geom, 'distance=30 unit=mile') = 'TRUE'
+ AND not sdo_within_distance(c.location, i.geom, 'distance=15 unit=mile') = 'TRUE'
+ )
 ```
+
+Widzimy, że droga I275 ma więcej niż jeden fragment, ale tylko przy północnym możemy znaleźć miasta o zadanych odległościach
+
+
+![](img/ex5/I275.png)
+
+
+f)Sprawdźmy czy znajdziemy więcej miast dla podpunktu e) ustawiając inną odległość od drogi.
+
+```sql
+SELECT c.city, c.state_abrv, c.location 
+FROM us_cities c
+WHERE ROWID IN(
+SELECT c.rowid
+FROM us_interstates i, us_cities c
+WHERE i.interstate = 'I275'
+AND sdo_within_distance(c.location, i.geom, 'distance=60 unit=mile') = 'TRUE'
+ )
+```
+
+Okazuje się, że na florydzie też jest fragment drogi I275
+
+
+![](img/ex5/I275_more.png)
+
+
+g) Wszystkie drogi które przechodzą przez stan Wyoming
+
+```sql
+select * from us_states
+where state_abrv = 'WY';
+
+SELECT i.interstate, i.geom
+FROM us_interstates i
+WHERE i.id IN(
+SELECT i.id
+FROM us_interstates i, us_states s
+WHERE s.state_abrv = 'WY'
+AND sdo_within_distance(s.geom, i.geom, 'distance=0 unit=mile') = 'TRUE'
+);
+```
+
+![](img/ex5/wyoming.png)
 
 # Zadanie 6
 
