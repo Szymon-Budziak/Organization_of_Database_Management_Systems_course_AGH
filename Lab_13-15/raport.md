@@ -615,6 +615,7 @@ FETCH FIRST 5 ROWS ONLY
 
 e)    Itp. (własne przykłady)
 
+# TODO
 
 > Wyniki, zrzut ekranu, komentarz
 > (dla każdego z podpunktów)
@@ -631,11 +632,11 @@ FROM us_cities c1, us_cities c2
 WHERE c1.city = 'Buffalo' and c2.city = 'Syracuse';
 ```
 
->Wyniki, zrzut ekranu, komentarz
+> Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
-```
+![](img/ex7/12.png)
+
+> Odległość między miastami Buffalo i Syracuse wynosi 222.18 km.
 
 Dodatkowo:
 
@@ -699,15 +700,17 @@ e)    Przetestuj działanie funkcji
 
     c.     sdo_centroid, sdo_mbr, sdo_convexhull, sdo_simplify
 
+# TODO
+
 f)      Itp. (własne przykłady)
 
-
-> Wyniki, zrzut ekranu, komentarz
-> (dla każdego z podpunktów)
+> Wyniki, zrzut ekranu, komentarz (dla każdego z podpunktów)
 
 ```sql
 --  ...
 ```
+
+# TODO
 
 
 Zadanie 8
