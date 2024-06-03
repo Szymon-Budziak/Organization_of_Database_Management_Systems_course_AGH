@@ -556,7 +556,9 @@ WHERE i.interstate = 'I275'
 
 Widzimy, że droga I275 ma więcej niż jeden fragment, ale tylko przy północnym możemy znaleźć miasta o zadanych odległościach
 
+
 ![](img/ex5/I275.png)
+
 
 f)Sprawdźmy czy znajdziemy więcej miast dla podpunktu e) ustawiając inną odległość od drogi.
 
@@ -573,7 +575,9 @@ AND sdo_within_distance(c.location, i.geom, 'distance=60 unit=mile') = 'TRUE'
 
 Okazuje się, że na florydzie też jest fragment drogi I275
 
+
 ![](img/ex5/I275_more.png)
+
 
 g) Wszystkie drogi które przechodzą przez stan Wyoming
 
