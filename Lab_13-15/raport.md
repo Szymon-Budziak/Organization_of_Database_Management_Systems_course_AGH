@@ -259,33 +259,37 @@ W przypadku wykorzystywania narzędzia SQL Developer, w celu wizualizacji na map
 SELECT pp.name, pp.geom  FROM us_parks pp
 WHERE id IN
 (
-    SELECT p.id
-    FROM us_parks p, us_states s
-    WHERE s.state = 'Wyoming'
-    and SDO_INSIDE (p.geom, s.geom ) = 'TRUE'
+    SELECT p.id
+    FROM us_parks p, us_states s
+    WHERE s.state = 'Wyoming'
+    and SDO_INSIDE (p.geom, s.geom ) = 'TRUE'
 )
 ```
 
-
 > Wyniki, zrzut ekranu, komentarz
 
+Same parki z podzapytania nie dają nam dużo informacji.
+
+![](img/ex3/just_nps.png)
+
+Wyświetlmy je na mapie USA.
+
 ```sql
---  ...
+select * from us_states;
 ```
 
+![](img/ex3/nps_and_states.png)
+
+Dodajmy stan Wyoming i zaznaczmy go innym kolorem w celu rozróżnienia.
 
 ```sql
 SELECT state, geom FROM us_states
 WHERE state = 'Wyoming'
 ```
 
-
-
 > Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
-```
+![](img/ex3/wyoming_nps_and_state.png)
 
 
 Porównaj wynik z:
@@ -299,14 +303,24 @@ AND SDO_ANYINTERACT (p.geom, s.geom ) = 'TRUE';
 
 W celu wizualizacji użyj podzapytania
 
-
-
 > Wyniki, zrzut ekranu, komentarz
 
+Podzapytanie umożliwiające wizualizację:
+
 ```sql
---  ...
+SELECT pp.name, pp.geom FROM us_parks pp
+WHERE id IN
+(
+    SELECT p.id
+    FROM us_parks p, us_states s
+    WHERE s.state = 'Wyoming'
+    AND SDO_ANYINTERACT (p.geom, s.geom ) = 'TRUE'
+)
 ```
 
+Widzimy, dużo więcej parków. Na przykład widoczny park Yellowstone wcześniej nie był widoczny na mapie. Można wyciągnąć wniosek, że funkcja `SDO_INSIDE` pozwala na wyodrębnienie tylko tych elementów geometrycznych, które w całości znajdują się wewnątrz wybranego obszaru i nie dotykają jego granic. Zato `SDO_ANYINTERACT` wyodrębnia też obszary częściowo nachodzące na wybrany oraz te przyległe do niego.
+
+![](img/ex3/interactions.png)
 
 # Zadanie 4
 
@@ -331,13 +345,71 @@ AND SDO_RELATE ( c.geom,s.geom, 'mask=COVEREDBY') = 'TRUE';
 
 W przypadku wykorzystywania narzędzia SQL Developer, w celu wizualizacji danych na mapie należy użyć podzapytania (podobnie jak w poprzednim zadaniu)
 
-
-
 > Wyniki, zrzut ekranu, komentarz
 
+Mapa z fragmentem na którym widać New Hampshire.
+
 ```sql
---  ...
+Select * from us_states
+WHERE state = 'New Hampshire';
 ```
+
+![](img/ex4/new_hampshire.png)
+
+
+Zobaczmy jak wygląda wynik pierwszego zapytania - z maską `INSIDE+COVEREDBY`
+
+```sql
+SELECT cc.county, cc.state_abrv, cc.geom FROM us_counties cc
+WHERE id IN
+(
+    SELECT c.id
+    FROM us_counties c, us_states s
+    WHERE s.state = 'New Hampshire'
+    AND SDO_RELATE ( c.geom,s.geom, 'mask=INSIDE+COVEREDBY') = 'TRUE'
+);
+```
+
+Widzimy, że cały stan jest pokryty fragmentami - hrabstwami. 
+
+![](img/ex4/inside_coveredby.png)
+
+Sprwadźmy drugie zapytanie - maskę `INSIDE`.
+
+```sql
+SELECT cc.county, cc.state_abrv, cc.geom FROM us_counties cc
+WHERE id IN
+(
+    SELECT c.id
+    FROM us_counties c, us_states s
+    WHERE s.state = 'New Hampshire'
+    AND SDO_RELATE ( c.geom,s.geom, 'mask=INSIDE') = 'TRUE'
+);
+```
+
+`INSIDE` powoduje wybranie tylko tych hrabstw które w całości znajdują się w stanie.
+
+![](img/ex4/inside.png)
+
+Trzecie zapytanie - maska `COVEREDBY`
+
+```sql
+SELECT cc.county, cc.state_abrv, cc.geom FROM us_counties cc
+WHERE id IN
+(
+    SELECT c.id
+    FROM us_counties c, us_states s
+    WHERE s.state = 'New Hampshire'
+    AND SDO_RELATE ( c.geom,s.geom, 'mask=COVEREDBY') = 'TRUE'
+);
+```
+
+Widzimy, że tylko te hrabstwa które stykają się z granicą stanu zostają wybrane
+
+![](img/ex4/coveredby.png)
+
+Z obserwacji można wyciągnąć wnioski o masce `COVEREDBY` - nie uwzględnia ona elementów całkowicie zawartych wewnątrz stanu New Hampshire. Oznacza to, że żeby coś zostało przez nią uwzględnione musi mieć część wspólną z obszarem na zewnątrz stanu. W tym przypadku tą częścią wspólną jest granica.
+
 
 # Zadanie 5
 
