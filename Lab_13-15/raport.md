@@ -786,15 +786,48 @@ Rozwiązanie nie jest w pełni poprawne. Wygląda na to, że pomimo specyfikowan
 
 ![](img/ex6/faulty_interstate.png)
 
-f)      Itp. (własne przykłady)
-
-
-> Wyniki, zrzut ekranu, komentarz
-> (dla każdego z podpunktów)
+Przykład udało się poprawić zmianą podzapytania
 
 ```sql
---  ...
+SELECT c2.city, c2.location
+FROM us_cities c2
+WHERE c2.id in (
+SELECT c.id 
+FROM (select * from us_cities where pop90 > 300000) c, us_interstates i
+WHERE i.interstate = 'I170'
+AND SDO_NN(c.location, i.geom) = 'TRUE'
+AND rownum <= 5
+);
 ```
+
+![](img/ex6/fixed_interstate.png)
+
+
+f) 5 jednostek administracyjnych o populacji większej niż 1 300 000 najbliżej Nowego Jorku
+
+```sql
+select * from us_states
+where state_abrv != 'AK';
+
+select * from us_cities
+where city = 'New York';
+
+SELECT cn.county, cn.totpop, cn.geom
+FROM us_counties cn
+WHERE cn.id in (
+select cn.id
+FROM (select * from us_counties where totpop > 1300000 and county != 'New York') cn, us_cities c 
+WHERE c.city = 'New York'
+AND sdo_nn(cn.geom, c.location) = 'TRUE'
+AND rownum <= 5
+);
+```
+
+W zapytaniu zawarto filtrację która upewnia się, żeby nie został wybrany stan `New York` jednak punkt będący współrzędnymi miasta Nowy Jork znajduje się w jednym ze zwróconych obszarów. Jest to duże miasto które obejmuje kilka obszarów administracyjnych więc punkt określający jego współrzędne znalazł się na obszarze innego hrabstwa
+
+![](img/ex6/large_counties.png)
+
+
 
 
 # Zadanie 7
