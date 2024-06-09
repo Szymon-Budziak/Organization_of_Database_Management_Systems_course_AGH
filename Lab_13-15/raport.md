@@ -436,7 +436,6 @@ AND sdo_within_distance (c.location, i.geom,'distance=50 unit=mile'
 ```
 
 
-
 > Wyniki, zrzut ekranu, komentarz
 
 Musieliśmy zmodyfikować ostatnie zapytanie:
@@ -611,31 +610,224 @@ AND sdo_nn(c.location, i.geom, 'sdo_num_res=5') = 'TRUE';
 >Wyniki, zrzut ekranu, komentarz
 
 ```sql
---  ...
+select * from us_states
+where state_abrv = 'FL';
+
+select * from us_interstates
+where interstate = 'I4';
+
+SELECT c.city, c.state_abrv, c.location
+FROM us_cities c
+WHERE c.id in (
+select c.id
+FROM us_interstates i, us_cities c 
+WHERE i.interstate = 'I4'
+AND sdo_nn(c.location, i.geom, 'sdo_num_res=5') = 'TRUE'
+);
 ```
 
+![](img/ex6/I4-5-cities.png)
 
 Dodatkowo:
 
-a)     Znajdz kilka miast najbliższych rzece Mississippi
+a)    Znajdz kilka miast najbliższych rzece Mississippi
+
+```sql
+select * from us_states
+where state_abrv != 'AK';
+
+select * from us_rivers
+where name = 'Mississippi';
+
+SELECT c.city, c.state_abrv, c.location
+FROM us_cities c
+WHERE c.id in (
+select c.id
+FROM us_rivers r, us_cities c 
+WHERE r.name = 'Mississippi'
+AND sdo_nn(c.location, r.geom, 'sdo_num_res=5') = 'TRUE'
+);
+```
+
+Na pierwszy rzut oka wygląda na to, że są tylko 4 miasta. Czy to błąd?
+
+![](img/ex6/mississippi.png)
+
+Nie! 2 z miast leżą poprostu blisko siebie
+
+![](img/ex6/mississippi_2.png)
+
+Znalezione miasta to St Paul, Memphis, St Louis, Minneapolis oraz Baton Rouge
+
 
 b)    Znajdz 3 miasta najbliżej Nowego Jorku
 
-c)     Znajdz kilka jednostek administracyjnych (us_counties) z których jest najbliżej do Nowego Jorku
-
-d)    Znajdz 5 najbliższych miast od drogi  'I170', podaj odległość do tych miast
-
-e)    Znajdz 5 najbliższych dużych miast (o populacji powyżej 300 tys) od drogi  'I170'
-
-f)      Itp. (własne przykłady)
-
-
-> Wyniki, zrzut ekranu, komentarz
-> (dla każdego z podpunktów)
+Należy wyświetlić wszystkie stany - część z najbliższych miast znajduje się już poza 
 
 ```sql
---  ...
+select * from us_states
+where state_abrv != 'AK';
+
+select * from us_cities
+where city = 'New York';
+
+SELECT c.city, c.state_abrv, c.location
+FROM us_cities c
+WHERE c.id in (
+select c2.id
+FROM us_cities c, 
+(select * from us_cities
+where city != 'New York') c2 
+WHERE c.city = 'New York'
+AND sdo_nn(c.location, c2.location, 'sdo_num_res=5') = 'TRUE'
+);
 ```
+
+Nowy Jork zaznaczyliśmy innym kolorem dla lepszego rozróżnienia
+
+![](img/ex6/NY.png)
+
+c)    Znajdz kilka jednostek administracyjnych (us_counties) z których jest najbliżej do Nowego Jorku
+
+```sql
+select * from us_states
+where state_abrv != 'AK';
+
+select * from us_cities
+where city = 'New York';
+
+SELECT cn.county, cn.geom
+FROM us_counties cn
+WHERE cn.id in (
+select cn.id
+FROM us_counties cn, 
+us_cities c 
+WHERE c.city = 'New York'
+AND sdo_nn(cn.geom, c.location, 'sdo_num_res=5') = 'TRUE'
+);
+```
+
+Oczywiście jednostka administracyjna Nowy Jork jest najbliżej miasta Nowy Jork
+
+![](img/ex6/NY_counties.png)
+
+d)    Znajdz 5 najbliższych miast od drogi 'I170', podaj odległość do tych miast
+
+
+```sql
+select * from us_states
+where state_abrv != 'AK';
+
+select * from us_interstates
+where interstate = 'I170';
+
+SELECT c.city, c.location
+FROM us_cities c
+WHERE c.id in (
+select c.id 
+FROM us_interstates i, us_cities c 
+WHERE i.interstate = 'I170'
+AND sdo_nn(c.location, i.geom, 'sdo_num_res=5') = 'TRUE'
+);
+
+SELECT c.city, c.location, 
+       SDO_GEOM.SDO_DISTANCE(c.location, i.geom, 0.005,'unit=MILE') AS distance
+FROM us_cities c, us_interstates i
+WHERE c.id IN (
+    SELECT c.id
+    FROM us_interstates i, us_cities c
+    WHERE i.interstate = 'I170'
+    AND SDO_NN(c.location, i.geom, 'sdo_num_res=5') = 'TRUE'
+)
+AND i.interstate = 'I170';
+)
+```
+
+znalezione odległości dla miast to:
+
+
+| city        | distance in miles |
+|-------------|-------------------|
+| Evansvillee | 158.224219737852  |
+| Peoria      | 78.7997463714433  |
+| Springfield | 78.7997463714433  |
+| St Louis    | 5.36297295124004  |
+| Springfield | 188.508631077882  |
+
+Znaleźliśmy dwa miasta o nazwie Springfield!
+
+![](img/ex6/interstate_cities.png)
+
+Z początku nie widzieliśmy drogi, jednak po zbliżeniu udało się zobaczyć jej krótki fragment
+
+![](img/ex6/interstate_alone.png)
+
+
+e)    Znajdz 5 najbliższych dużych miast (o populacji powyżej 300 tys) od drogi 'I170'
+
+```sql
+select * from us_states
+where state_abrv != 'AK';
+
+select * from us_interstates
+where interstate = 'I170';
+
+SELECT c2.city, c2.location
+FROM us_cities c2
+WHERE c2.id in (
+SELECT c.id 
+FROM (select * from us_cities where pop90 > 300000) c, us_interstates i
+WHERE i.interstate = 'I170'
+AND SDO_NN(c.location, i.geom, 'sdo_num_res=5') = 'TRUE'
+);
+```
+
+Rozwiązanie nie jest w pełni poprawne. Wygląda na to, że pomimo specyfikowania nowej tabeli c przy pomocy podzapytania `SDO_NN` dalej operuje wyłącznie na tabeli `us_cities` zamiast na efekcie podzapytania. Zwracane jest tylko jedno miasto z 5 najbliższych miast - St Louis - jedyne które spełnia warunek o populacji. Zamiast 5 najbliższych spełniających warunek. 
+
+![](img/ex6/faulty_interstate.png)
+
+Przykład udało się poprawić zmianą podzapytania
+
+```sql
+SELECT c2.city, c2.location
+FROM us_cities c2
+WHERE c2.id in (
+SELECT c.id 
+FROM (select * from us_cities where pop90 > 300000) c, us_interstates i
+WHERE i.interstate = 'I170'
+AND SDO_NN(c.location, i.geom) = 'TRUE'
+AND rownum <= 5
+);
+```
+
+![](img/ex6/fixed_interstate.png)
+
+
+f) 5 jednostek administracyjnych o populacji większej niż 1 300 000 najbliżej Nowego Jorku
+
+```sql
+select * from us_states
+where state_abrv != 'AK';
+
+select * from us_cities
+where city = 'New York';
+
+SELECT cn.county, cn.totpop, cn.geom
+FROM us_counties cn
+WHERE cn.id in (
+select cn.id
+FROM (select * from us_counties where totpop > 1300000 and county != 'New York') cn, us_cities c 
+WHERE c.city = 'New York'
+AND sdo_nn(cn.geom, c.location) = 'TRUE'
+AND rownum <= 5
+);
+```
+
+W zapytaniu zawarto filtrację która upewnia się, żeby nie został wybrany stan `New York` jednak punkt będący współrzędnymi miasta Nowy Jork znajduje się w jednym ze zwróconych obszarów. Jest to duże miasto które obejmuje kilka obszarów administracyjnych więc punkt określający jego współrzędne znalazł się na obszarze innego hrabstwa
+
+![](img/ex6/large_counties.png)
+
+
 
 
 # Zadanie 7
