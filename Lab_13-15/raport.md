@@ -550,7 +550,7 @@ FETCH FIRST ROW ONLY;
 
 ![](img/ex7/3.png)
 
-> Najdłuższa droga ma 4290.64 km.
+> Najdłuższa droga ma 4290.64 km i jest nią I90.
 
  - droga najkrótsza
 
@@ -563,7 +563,7 @@ FETCH FIRST ROW ONLY;
 
 ![](img/ex7/4.png)
 
-> Najkrótsza droga ma 0.46 km.
+> Najkrótsza droga to I564 i ma 0.46 km.
 
 c)     Która rzeka jest najdłuższa/najkrótsza
 
@@ -578,7 +578,7 @@ FETCH FIRST ROW ONLY;
 
 ![](img/ex7/5.png)
 
-> Najdłuższa rzeka ma długość 6950.91 km.
+> Najdłuższa rzeka ma długość 6950.91 km i jest nią St. Clair.
 
  - rzeka najkrótsza
 
@@ -591,7 +591,9 @@ FETCH FIRST ROW ONLY;
 
 ![](img/ex7/6.png)
 
-> Najkrótsza rzeka ma długość 1.16 km.
+> Najkrótsza rzeka to Richelieu i ma długość 1.16 km.
+
+> Wniosek: W przypadku dróg rezultat był stosunkowo poprawny, natomiast rzeki w używanej bazie danych nie zawsze są przedstawione jako prosta linia, lecz czasami mają bardziej skomplikowany kształt, przez co otrzymany wynik (długość krzywej) nie do końca zgadza się z długością rzeki podawaną w innych źródłach.
 
 d)    Które stany mają najdłuższą granicę
 
@@ -615,15 +617,30 @@ FETCH FIRST 5 ROWS ONLY
 
 e)    Itp. (własne przykłady)
 
-# TODO
-
 > Wyniki, zrzut ekranu, komentarz
 > (dla każdego z podpunktów)
 
+ - 5 najdłuszych granic (w kilometrach):
+
 ```sql
---  ...
+SELECT cntry_name, SDO_GEOM.SDO_LENGTH(geometry, 0.01, 'unit=kilometer') as country_length
+FROM world_countries
+ORDER BY country_length desc;
 ```
 
+![](img/ex7/14.png)
+
+ - 10 największych parków (w milach):
+
+```sql
+SELECT name, SDO_GEOM.SDO_LENGTH(geom, 0.01, 'unit=mile') as length
+FROM us_parks
+ORDER BY length desc;
+```
+
+![](img/ex7/13.png)
+
+---
 Oblicz odległość między miastami Buffalo i Syracuse
 
 ```sql
@@ -696,33 +713,170 @@ e)    Przetestuj działanie funkcji
 
     a.     sdo_intersection, sdo_union, sdo_difference
 
+**sdo_intersection**
+
+```sql
+SELECT SDO_GEOM.SDO_INTERSECTION(a.geom, b.geom, 0.005) AS intersection_geom
+FROM geometry_table a, geometry_table b
+WHERE a.id = 1 AND b.id = 2;
+```
+
+> Wniosek: Funkcja SDO_INTERSECTION zwraca część wspólna dwoch podanych geometrii. Zwraca nowy obiekt geometryczny, który reprezentuje wspólną część obu wejściowych geometrii.
+
+**sdo_union**
+
+```sql
+SELECT SDO_GEOM.SDO_UNION(a.geom, b.geom, 0.005) AS union_geom
+FROM geometry_table a, geometry_table b
+WHERE a.id = 1 AND b.id = 2;
+```
+
+> Wniosek: Funkcja SDO_UNION zwraca sumę dwóch podanych geometrii. Zwraca nowy obiekt geometryczny, który obejmuje obszar obu wejściowych geometrii.
+
+**sdo_difference**
+
+```sql
+SELECT SDO_GEOM.SDO_DIFFERENCE(a.geom, b.geom, 0.005) AS difference_geom
+FROM geometry_table a, geometry_table b
+WHERE a.id = 1 AND b.id = 2;
+```
+
+> Wniosek: Funkcja SDO_DIFFERENCE róznice miedzy dwoma podanymi geometriami. Zwraca nowy obiekt geometryczny, który reprezentuje obszar pierwszej geometrii, z którego usunięto obszar drugiej geometrii.
+
     b.     sdo_buffer
+
+**sdo_buffer**
+
+```sql
+SELECT SDO_GEOM.SDO_BUFFER(geom, 0.1, 0.005) AS buffer_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_BUFFER tworzy bufer wokol podanej geometrii. Zwraca nową geometrię, która reprezentuje obszar w określonej odległości od wejściowej geometrii.
 
     c.     sdo_centroid, sdo_mbr, sdo_convexhull, sdo_simplify
 
-# TODO
+**sdo_centroid**
+
+```sql
+SELECT SDO_GEOM.SDO_CENTROID(geom, 0.005) AS centroid_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_CENTROID oblicza centroid dla podanej geometrii. Zwraca punkt geometryczny, który jest środkiem ciężkości wejściowej geometrii.
+
+**sdo_mbr**
+
+```sql
+SELECT SDO_GEOM.SDO_MBR(geom) AS mbr_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_MBR zwraca minimalny zewnętrzny prostokąt dla podanej geometrii. Zwraca prostokątną geometrię, która całkowicie obejmuje wejściowy obiekt geometryczny.
+
+**sdo_convexhull**
+
+```sql
+SELECT SDO_GEOM.SDO_CONVEXHULL(geom, 0.005) AS convexhull_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_CONVEXHULL tworzy otoczkę wypukłą wokół podanej geometrii. Zwraca najmniejszy wypukły wielokąt, który obejmuje wszystkie punkty wejściowej geometrii.
+
+**sdo_simplify**
+
+```sql
+SELECT SDO_GEOM.SDO_SIMPLIFY(geom, 0.005) AS simplified_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_SIMPLIFY upraszcza podaną geometrię. Zwraca uproszczoną wersję wejściowej geometrii, zachowującą jej ogólny kształt i cechy, ale z mniejszą liczbą punktów.
 
 f)      Itp. (własne przykłady)
 
 > Wyniki, zrzut ekranu, komentarz (dla każdego z podpunktów)
 
+ - Pola powierzchni stanów od największego do najmniejszego w kilometrach kwadratowych (5 przykładów)
+
 ```sql
---  ...
+SELECT state, SDO_GEOM.SDO_AREA(geom, 0.5,'unit=SQ_KM') as area
+FROM us_states
+ORDER BY area DESC
 ```
 
-# TODO
+('Alaska', 1501593.16)
+('Texas', 687005.67)
+('California', 410033.45)
+('Montana', 380815.66)
+('New Mexico', 314906.25)
 
-
-Zadanie 8
+# Zadanie 8
 
 Wykonaj kilka własnych przykładów/analiz
 
 
->Wyniki, zrzut ekranu, komentarz
+> Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
-```
+1. Analiza przykładu najdłuższej rzeki przy użyciu narzędzi dostarczanych przez język
+Python (folium, geojson)
+
+**Skrypt w Pythonie**
+
+![](img/ex8/1_s.png)
+
+**Wynik**
+
+![](img/ex8/1.png)
+
+> **Wniosek**
+
+> Wynik uzyskany przy pomocy języka Python jest taki sam jak przy pomocy narzędzi postgresa. W obydwu jednak przypdkach, mozemy zauwazyc, ze ksztalt ktory jest przedstawiony nie wyglada jak rzeka a bardziej jezioro. Mamy ewidentnie do czynienia z bledem w danych. Po sprawdzeniu wyglada na to, ze rzeka St. Clair to niewielka kreska w okolicach Detroit. Mozemy to lepiej zaobserwoac na przyblizonym zdjeciu:
+
+![](img/ex8/1_2.png)
+
+2. Stany w postaci minimalnych pokrywajacych sie prostokatow
+
+**Skrypt w Pythonie**
+
+![](img/ex8/2_s.png)
+
+**Wynik**
+
+![](img/ex8/2.png)
+
+> Wniosek: W tym przypadku, udało się zaobserwować pewną anomalię ze stanem Alaska. Mozemy zaobserwowac, ze prostakt ktory jest powiazany z Alaską, nawet jej nie dotyka.
+
+![](img/ex8/2_2.png)
+
+3. Najdłusza rzeka w przeplywajaca przez stan Texas:
+
+**Skrypt w Pythonie**
+
+![](img/ex8/3_s.png)
+
+**Wynik**
+
+![](img/ex8/3.png)
+
+> Wniosek: W tym przyładzie podajemy zapytanie, które zwraca i umożliwia wyświetlenie najdłuzszej rzeki przepływającą przez stan Texas (Rio Grande, 2397.13 km).
+
+4. 5 parków narodowych najblizej Los Angeles
+
+**Skrypt w Pythonie**
+
+![](img/ex8/4_s.png)
+
+**Wynik**
+
+![](img/ex8/4.png)
+
+> Wniosek: Zapytanie to zwraca i umoliwia nam wyświetlenie na mapie 5 parków narodowych najbliższych Los Angeles (Santa Monica, Mountains NRA, Angeles NF, Los Padres NF, Kenney
+Grove Park, Toland Park), bez wykorzystania funkcji `SDO_NN`.
 
 Punktacja
 
