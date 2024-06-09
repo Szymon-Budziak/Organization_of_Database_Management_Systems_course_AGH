@@ -1,4 +1,3 @@
-import cursor
 import folium
 import geojson
 from shapely import wkt
