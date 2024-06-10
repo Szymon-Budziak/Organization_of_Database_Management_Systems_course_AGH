@@ -721,6 +721,8 @@ FROM geometry_table a, geometry_table b
 WHERE a.id = 1 AND b.id = 2;
 ```
 
+![](img/ex7/15.png)
+
 > Wniosek: Funkcja SDO_INTERSECTION zwraca część wspólna dwoch podanych geometrii. Zwraca nowy obiekt geometryczny, który reprezentuje wspólną część obu wejściowych geometrii.
 
 **sdo_union**
@@ -731,6 +733,8 @@ FROM geometry_table a, geometry_table b
 WHERE a.id = 1 AND b.id = 2;
 ```
 
+![](img/ex7/16.png)
+
 > Wniosek: Funkcja SDO_UNION zwraca sumę dwóch podanych geometrii. Zwraca nowy obiekt geometryczny, który obejmuje obszar obu wejściowych geometrii.
 
 **sdo_difference**
@@ -740,6 +744,8 @@ SELECT SDO_GEOM.SDO_DIFFERENCE(a.geom, b.geom, 0.005) AS difference_geom
 FROM geometry_table a, geometry_table b
 WHERE a.id = 1 AND b.id = 2;
 ```
+
+![](img/ex7/17.png)
 
 > Wniosek: Funkcja SDO_DIFFERENCE róznice miedzy dwoma podanymi geometriami. Zwraca nowy obiekt geometryczny, który reprezentuje obszar pierwszej geometrii, z którego usunięto obszar drugiej geometrii.
 
