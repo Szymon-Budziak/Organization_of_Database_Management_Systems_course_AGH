@@ -843,31 +843,127 @@ WHERE interstate = 'I4';
 
 >Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
-```
+
+![](img/ex7/1.png)
 
 
 Dodatkowo:
 
 a)     Oblicz długość rzeki Mississippi
 
+```sql
+SELECT SDO_GEOM.SDO_LENGTH (geom, 0.5,'unit=kilometer') length
+FROM us_rivers
+WHERE name = 'Mississippi';
+```
+
+![](img/ex7/2.png)
+
+> Długość rzeki Mississippi to 3860 km.
+
 b)    Która droga jest najdłuższa/najkrótsza
+ - droga najdłuższa
+
+```sql
+SELECT interstate, SDO_GEOM.SDO_LENGTH (geom, 0.5,'unit=kilometer') length
+FROM us_interstates
+ORDER BY length DESC
+FETCH FIRST ROW ONLY;
+```
+
+![](img/ex7/3.png)
+
+> Najdłuższa droga ma 4290.64 km i jest nią I90.
+
+ - droga najkrótsza
+
+```sql
+SELECT interstate, SDO_GEOM.SDO_LENGTH (geom, 0.5,'unit=kilometer') length
+FROM us_interstates
+ORDER BY length
+FETCH FIRST ROW ONLY;
+```
+
+![](img/ex7/4.png)
+
+> Najkrótsza droga to I564 i ma 0.46 km.
 
 c)     Która rzeka jest najdłuższa/najkrótsza
 
+ - rzeka najdłuższa
+
+```sql
+SELECT name, SDO_GEOM.SDO_LENGTH (geom, 0.5,'unit=kilometer') length
+FROM us_rivers
+ORDER BY length DESC
+FETCH FIRST ROW ONLY;
+```
+
+![](img/ex7/5.png)
+
+> Najdłuższa rzeka ma długość 6950.91 km i jest nią St. Clair.
+
+ - rzeka najkrótsza
+
+```sql
+SELECT name, SDO_GEOM.SDO_LENGTH (geom, 0.5,'unit=kilometer') length
+FROM us_rivers
+ORDER BY length
+FETCH FIRST ROW ONLY;
+```
+
+![](img/ex7/6.png)
+
+> Najkrótsza rzeka to Richelieu i ma długość 1.16 km.
+
+> Wniosek: W przypadku dróg rezultat był stosunkowo poprawny, natomiast rzeki w używanej bazie danych nie zawsze są przedstawione jako prosta linia, lecz czasami mają bardziej skomplikowany kształt, przez co otrzymany wynik (długość krzywej) nie do końca zgadza się z długością rzeki podawaną w innych źródłach.
+
 d)    Które stany mają najdłuższą granicę
 
-e)    Itp. (własne przykłady)
+```sql
+SELECT
+    state,
+    SDO_GEOM.SDO_LENGTH(geom, 0.5, 'unit=kilometer') AS border_length
+FROM
+    us_states
+ORDER BY
+    border_length DESC
+FETCH FIRST 5 ROWS ONLY
+```
 
+![](img/ex7/7.png)
+
+> Mozemy zauwazyc, ze 3 stany, które posiadaja najdluzsze granice to:
+> - Alaska
+> - Texas
+> - California 
+
+e)    Itp. (własne przykłady)
 
 > Wyniki, zrzut ekranu, komentarz
 > (dla każdego z podpunktów)
 
+ - 5 najdłuszych granic (w kilometrach):
+
 ```sql
---  ...
+SELECT cntry_name, SDO_GEOM.SDO_LENGTH(geometry, 0.01, 'unit=kilometer') as country_length
+FROM world_countries
+ORDER BY country_length desc;
 ```
 
+![](img/ex7/14.png)
+
+ - 10 największych parków (w milach):
+
+```sql
+SELECT name, SDO_GEOM.SDO_LENGTH(geom, 0.01, 'unit=mile') as length
+FROM us_parks
+ORDER BY length desc;
+```
+
+![](img/ex7/13.png)
+
+---
 Oblicz odległość między miastami Buffalo i Syracuse
 
 ```sql
@@ -876,53 +972,396 @@ FROM us_cities c1, us_cities c2
 WHERE c1.city = 'Buffalo' and c2.city = 'Syracuse';
 ```
 
+> Wyniki, zrzut ekranu, komentarz
 
+![](img/ex7/12.png)
 
->Wyniki, zrzut ekranu, komentarz
-
-```sql
---  ...
-```
+> Odległość między miastami Buffalo i Syracuse wynosi 222.18 km.
 
 Dodatkowo:
 
 a)     Oblicz odległość między miastem Tampa a drogą I4
 
-b)    Jaka jest odległość z między stanem Nowy Jork a  Florydą
+```sql
+SELECT SDO_GEOM.SDO_DISTANCE ( c1.location, i.geom, 0.5, 'unit=kilometer') distance
+FROM us_cities c1, us_interstates i
+WHERE c1.city = 'Tampa' and i.interstate = 'I4';
+```
 
-c)     Jaka jest odległość z między miastem Nowy Jork a  Florydą
+![](img/ex7/8.png)
+
+> Odleglosc miedzy miastem Tampa a drogą I4 to 3.10 km.
+
+b)    Jaka jest odległość między stanem Nowy Jork a  Florydą
+
+```sql
+SELECT SDO_GEOM.SDO_DISTANCE (s1.geom, s2.geom, 0.5, 'unit=kilometer') distance
+FROM us_states s1, us_states s2
+WHERE s1.state = 'New York' and s2.state = 'Florida';
+```
+
+![](img/ex7/9.png)
+
+> Odległość między stanem Nowy Jork a Florydą wynosi 1256.58 km.
+
+c)     Jaka jest odległość między miastem Nowy Jork a Florydą
+
+```sql
+SELECT SDO_GEOM.SDO_DISTANCE (c1.location, s2.geom, 0.5, 'unit=kilometer') distance
+FROM us_cities c1, us_states s2
+WHERE c1.city = 'New York' and s2.state = 'Florida';
+```
+
+![](img/ex7/10.png)
+
+> Odległość między miastem Nowy Jork a Florydą to 1296.59 km.
 
 d)    Podaj 3 parki narodowe do których jest najbliżej z Nowego Jorku, oblicz odległości do tych parków
 
+```sql
+SELECT p.name,
+    SDO_GEOM.SDO_DISTANCE(c.location, p.geom, 0.5, 'unit=mile') AS distance
+FROM us_parks p,
+     us_cities c
+WHERE c.city = 'New York'
+AND SDO_NN(p.geom, c.location, 'sdo_num_res=3') = 'TRUE'
+ORDER BY distance
+```
+
+![](img/ex7/11.png)
+
+> Trzy najbliższe parki to Institute Park, Prospect Park oraz Thompkins Park.
+
 e)    Przetestuj działanie funkcji
 
-a.     sdo_intersection, sdo_union, sdo_difference
+    a.     sdo_intersection, sdo_union, sdo_difference
 
-b.     sdo_buffer
+**sdo_intersection**
 
-c.     sdo_centroid, sdo_mbr, sdo_convexhull, sdo_simplify
+```sql
+SELECT SDO_GEOM.SDO_INTERSECTION(a.geom, b.geom, 0.005) AS intersection_geom
+FROM geometry_table a, geometry_table b
+WHERE a.id = 1 AND b.id = 2;
+```
+
+![](img/ex7/15.png)
+
+> Wniosek: Funkcja SDO_INTERSECTION zwraca część wspólna dwoch podanych geometrii. Zwraca nowy obiekt geometryczny, który reprezentuje wspólną część obu wejściowych geometrii.
+
+**sdo_union**
+
+```sql
+SELECT SDO_GEOM.SDO_UNION(a.geom, b.geom, 0.005) AS union_geom
+FROM geometry_table a, geometry_table b
+WHERE a.id = 1 AND b.id = 2;
+```
+
+![](img/ex7/16.png)
+
+> Wniosek: Funkcja SDO_UNION zwraca sumę dwóch podanych geometrii. Zwraca nowy obiekt geometryczny, który obejmuje obszar obu wejściowych geometrii.
+
+**sdo_difference**
+
+```sql
+SELECT SDO_GEOM.SDO_DIFFERENCE(a.geom, b.geom, 0.005) AS difference_geom
+FROM geometry_table a, geometry_table b
+WHERE a.id = 1 AND b.id = 2;
+```
+
+![](img/ex7/17.png)
+
+> Wniosek: Funkcja SDO_DIFFERENCE róznice miedzy dwoma podanymi geometriami. Zwraca nowy obiekt geometryczny, który reprezentuje obszar pierwszej geometrii, z którego usunięto obszar drugiej geometrii.
+
+    b.     sdo_buffer
+
+**sdo_buffer**
+
+```sql
+SELECT SDO_GEOM.SDO_BUFFER(geom, 0.1, 0.005) AS buffer_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_BUFFER tworzy bufer wokol podanej geometrii. Zwraca nową geometrię, która reprezentuje obszar w określonej odległości od wejściowej geometrii.
+
+    c.     sdo_centroid, sdo_mbr, sdo_convexhull, sdo_simplify
+
+**sdo_centroid**
+
+```sql
+SELECT SDO_GEOM.SDO_CENTROID(geom, 0.005) AS centroid_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_CENTROID oblicza centroid dla podanej geometrii. Zwraca punkt geometryczny, który jest środkiem ciężkości wejściowej geometrii.
+
+**sdo_mbr**
+
+```sql
+SELECT SDO_GEOM.SDO_MBR(geom) AS mbr_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_MBR zwraca minimalny zewnętrzny prostokąt dla podanej geometrii. Zwraca prostokątną geometrię, która całkowicie obejmuje wejściowy obiekt geometryczny.
+
+**sdo_convexhull**
+
+```sql
+SELECT SDO_GEOM.SDO_CONVEXHULL(geom, 0.005) AS convexhull_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_CONVEXHULL tworzy otoczkę wypukłą wokół podanej geometrii. Zwraca najmniejszy wypukły wielokąt, który obejmuje wszystkie punkty wejściowej geometrii.
+
+**sdo_simplify**
+
+```sql
+SELECT SDO_GEOM.SDO_SIMPLIFY(geom, 0.005) AS simplified_geom
+FROM geometry_table
+WHERE id = 1;
+```
+
+> Wniosek: Funkcja SDO_SIMPLIFY upraszcza podaną geometrię. Zwraca uproszczoną wersję wejściowej geometrii, zachowującą jej ogólny kształt i cechy, ale z mniejszą liczbą punktów.
 
 f)      Itp. (własne przykłady)
 
+> Wyniki, zrzut ekranu, komentarz (dla każdego z podpunktów)
 
-> Wyniki, zrzut ekranu, komentarz
-> (dla każdego z podpunktów)
+ - Pola powierzchni stanów od największego do najmniejszego w kilometrach kwadratowych (5 przykładów)
 
 ```sql
---  ...
+SELECT state, SDO_GEOM.SDO_AREA(geom, 0.5,'unit=SQ_KM') as area
+FROM us_states
+ORDER BY area DESC
 ```
 
+('Alaska', 1501593.16)
+('Texas', 687005.67)
+('California', 410033.45)
+('Montana', 380815.66)
+('New Mexico', 314906.25)
 
-Zadanie 8
+# Zadanie 8
 
 Wykonaj kilka własnych przykładów/analiz
 
 
->Wyniki, zrzut ekranu, komentarz
+> Wyniki, zrzut ekranu, komentarz
 
-```sql
---  ...
+1. Analiza przykładu najdłuższej rzeki przy użyciu narzędzi dostarczanych przez język
+Python (folium, geojson)
+
+**Skrypt w Pythonie**
+
+```python
+# Initialize an empty folium map
+m = folium.Map()
+
+# Define the SQL query to find the longest river and counties that intersect with it
+query = """
+WITH LongestRiver AS (
+SELECT r.geom
+FROM us_rivers as r
+ORDER BY SDO_GEOM.SDO_LENGTH(r.geom, 0.005) DESC
+FETCH FIRST 1 ROWS ONLY)
+
+SELECT sdo_util.to_wktgeometry(c.geom)
+FROM us_counties as c, LongestRiver as lr
+WHERE SDO_ANYINTERACT (c.geom, lr.geom) =
+'TRUE'
+"""
+
+# Execute the SQL query and fetch all results
+# This returns the geometries of counties that intersect with the longest river in WKT format
+results = cursor.execute(query).fetchall()
+
+# Define the style for the GeoJSON features
+style = {"fillColor": "blue", "color": "red"}
+
+l = []
+for row in results:
+    # Create a GeoJSON feature with the geometry and empty properties and add to list
+    g = geojson.Feature(geometry=row[0], properties={})
+    l.append(g)
+
+# Create a GeoJSON FeatureCollection from the list of features
+feature_collection = geojson.FeatureCollection(l)
+
+# Add the GeoJSON data to the folium map with the specified style
+folium.GeoJson(feature_collection, style_function=lambda x: style).add_to(m)
 ```
+
+**Wynik**
+
+![](img/ex8/1.png)
+
+> **Wniosek**
+
+> Wynik uzyskany przy pomocy języka Python jest taki sam jak przy pomocy narzędzi postgresa. W obydwu jednak przypdkach, mozemy zauwazyc, ze ksztalt ktory jest przedstawiony nie wyglada jak rzeka a bardziej jezioro. Mamy ewidentnie do czynienia z bledem w danych. Po sprawdzeniu wyglada na to, ze rzeka St. Clair to niewielka kreska w okolicach Detroit. Mozemy to lepiej zaobserwoac na przyblizonym zdjeciu:
+
+![](img/ex8/1_2.png)
+
+2. Stany w postaci minimalnych pokrywajacych sie prostokatow
+
+**Skrypt w Pythonie**
+
+```python
+# Initialize map
+m = folium.Map()
+
+# New query to get the MBR of each state geometry
+query = """
+SELECT SDO_UTIL.TO_WKTGEOMETRY(SDO_GEOM.SDO_MBR(c.geom))
+FROM us_states c
+"""
+
+# Execute the query and fetch results
+results = cursor.execute(query).fetchall()
+
+# Define style for GeoJson
+style = {"fillColor": "blue", "color": "red"}
+
+# Process the query results into GeoJSON features
+features = []
+for row in results:
+    # Convert WKT to GeoJSON geometry
+    geom = wkt.loads(row[0])
+    geojson_geom = geojson.Feature(geometry=shape(geom), properties={})
+    features.append(geojson_geom)
+
+# Create a GeoJSON FeatureCollection
+feature_collection = geojson.FeatureCollection(features)
+
+# Add the GeoJSON data to the map with styling
+folium.GeoJson(feature_collection, style_function=lambda x: style).add_to(m)
+```
+
+**Wynik**
+
+![](img/ex8/2.png)
+
+> Wniosek: W tym przypadku, udało się zaobserwować pewną anomalię ze stanem Alaska. Mozemy zaobserwowac, ze prostakt ktory jest powiazany z Alaską, nawet jej nie dotyka.
+
+![](img/ex8/2_2.png)
+
+3. Najdłusza rzeka w przeplywajaca przez stan Texas:
+
+**Skrypt w Pythonie**
+
+```python
+# Initialize the map centered on Texas
+m = folium.Map(location=[31.0, -100.0], zoom_start=6)
+
+# Query to get the longest river in Texas
+query_longest_river_in_texas = """
+SELECT r.name, SDO_GEOM.SDO_LENGTH(r.geom, 0.005, 'unit=KM') as length, SDO_UTIL.TO_WKTGEOMETRY(r.geom)
+FROM us_rivers r, us_states s
+WHERE s.state = 'Texas' AND SDO_ANYINTERACT(r.geom, s.geom) = 'TRUE'
+ORDER BY length DESC
+FETCH FIRST ROW ONLY
+"""
+
+# Execute the query and fetch the result
+result = cursor.execute(query_longest_river_in_texas).fetchone()
+
+# Extract river name, length, and geometry
+river_name = result[0]
+river_length = result[1]
+river_geom_wkt = result[2]
+
+# Convert WKT to GeoJSON geometry
+river_geom = wkt.loads(river_geom_wkt)
+river_geojson_geom = geojson.Feature(
+    geometry=shape(river_geom),
+    properties={"name": river_name, "length_km": river_length},
+)
+
+# Define style for the river
+style = {"fillColor": "blue", "color": "red"}
+
+# Create a GeoJSON FeatureCollection
+feature_collection = geojson.FeatureCollection([river_geojson_geom])
+
+# Add the GeoJSON data to the map with styling
+folium.GeoJson(feature_collection, style_function=lambda x: style).add_to(m)
+
+# Add a popup with the river name and length
+popup_content = f"<strong>{river_name}</strong><br>Length: {river_length} km"
+folium.Popup(popup_content).add_to(m)
+```
+
+**Wynik**
+
+![](img/ex8/3.png)
+
+> Wniosek: W tym przyładzie podajemy zapytanie, które zwraca i umożliwia wyświetlenie najdłuzszej rzeki przepływającą przez stan Texas (Rio Grande, 2397.13 km).
+
+4. 5 parków narodowych najblizej Los Angeles
+
+**Skrypt w Pythonie**
+
+```python
+# Query to get the nearest parks to Los Angeles
+query_nearest_parks_to_la = """
+SELECT p.name, SDO_GEOM.SDO_DISTANCE(p.geom, c.location, 0.005, 'unit=KM') as distance, SDO_UTIL.TO_WKTGEOMETRY(p.geom)
+FROM us_parks p, us_cities c
+WHERE c.city = 'Los Angeles'
+ORDER BY distance
+FETCH FIRST 5 ROWS ONLY
+"""
+
+# Execute the query and fetch the results
+results = cursor.execute(query_nearest_parks_to_la).fetchall()
+
+# Initialize the map centered on Los Angeles
+m = folium.Map(location=[34.0522, -118.2437], zoom_start=12)
+
+# Define style for the parks
+style = {"fillColor": "green", "color": "darkgreen"}
+
+# Initialize an empty list to store GeoJSON features
+features = []
+
+# Process the query results
+for row in results:
+    park_name = row[0]
+    park_distance = row[1]
+    park_geom_wkt = row[2]
+
+    # Convert WKT to Shapely geometry
+    park_geom = loads(park_geom_wkt)
+
+    # Create a GeoJSON feature with the park's geometry and properties
+    park_geojson_geom = geojson.Feature(
+        geometry=park_geom, properties={"name": park_name, "distance_km": park_distance}
+    )
+
+    # Add the feature to the list
+    features.append(park_geojson_geom)
+
+    # Add a marker to the map for each park with a popup showing its name and distance
+    folium.Marker(
+        location=[park_geom.centroid.y, park_geom.centroid.x],
+        popup=f"<strong>{park_name}</strong><br>Distance: {park_distance:.2f} km",
+        icon=folium.Icon(color="green"),
+    ).add_to(m)
+
+# Create a GeoJSON FeatureCollection
+feature_collection = geojson.FeatureCollection(features)
+
+# Add the GeoJSON data to the map with styling
+folium.GeoJson(feature_collection, style_function=lambda x: style).add_to(m)
+```
+
+**Wynik**
+
+![](img/ex8/4.png)
+
+> Wniosek: Zapytanie to zwraca i umoliwia nam wyświetlenie na mapie 5 parków narodowych najbliższych Los Angeles (Santa Monica, Mountains NRA, Angeles NF, Los Padres NF, Kenney
+Grove Park, Toland Park), bez wykorzystania funkcji `SDO_NN`.
 
 Punktacja
 
