@@ -827,7 +827,43 @@ Python (folium, geojson)
 
 **Skrypt w Pythonie**
 
-![](img/ex8/1_s.png)
+```python
+# Initialize an empty folium map
+m = folium.Map()
+
+# Define the SQL query to find the longest river and counties that intersect with it
+query = """
+WITH LongestRiver AS (
+SELECT r.geom
+FROM us_rivers as r
+ORDER BY SDO_GEOM.SDO_LENGTH(r.geom, 0.005) DESC
+FETCH FIRST 1 ROWS ONLY)
+
+SELECT sdo_util.to_wktgeometry(c.geom)
+FROM us_counties as c, LongestRiver as lr
+WHERE SDO_ANYINTERACT (c.geom, lr.geom) =
+'TRUE'
+"""
+
+# Execute the SQL query and fetch all results
+# This returns the geometries of counties that intersect with the longest river in WKT format
+results = cursor.execute(query).fetchall()
+
+# Define the style for the GeoJSON features
+style = {"fillColor": "blue", "color": "red"}
+
+l = []
+for row in results:
+    # Create a GeoJSON feature with the geometry and empty properties and add to list
+    g = geojson.Feature(geometry=row[0], properties={})
+    l.append(g)
+
+# Create a GeoJSON FeatureCollection from the list of features
+feature_collection = geojson.FeatureCollection(l)
+
+# Add the GeoJSON data to the folium map with the specified style
+folium.GeoJson(feature_collection, style_function=lambda x: style).add_to(m)
+```
 
 **Wynik**
 
@@ -843,7 +879,36 @@ Python (folium, geojson)
 
 **Skrypt w Pythonie**
 
-![](img/ex8/2_s.png)
+```python
+# Initialize map
+m = folium.Map()
+
+# New query to get the MBR of each state geometry
+query = """
+SELECT SDO_UTIL.TO_WKTGEOMETRY(SDO_GEOM.SDO_MBR(c.geom))
+FROM us_states c
+"""
+
+# Execute the query and fetch results
+results = cursor.execute(query).fetchall()
+
+# Define style for GeoJson
+style = {"fillColor": "blue", "color": "red"}
+
+# Process the query results into GeoJSON features
+features = []
+for row in results:
+    # Convert WKT to GeoJSON geometry
+    geom = wkt.loads(row[0])
+    geojson_geom = geojson.Feature(geometry=shape(geom), properties={})
+    features.append(geojson_geom)
+
+# Create a GeoJSON FeatureCollection
+feature_collection = geojson.FeatureCollection(features)
+
+# Add the GeoJSON data to the map with styling
+folium.GeoJson(feature_collection, style_function=lambda x: style).add_to(m)
+```
 
 **Wynik**
 
@@ -857,7 +922,47 @@ Python (folium, geojson)
 
 **Skrypt w Pythonie**
 
-![](img/ex8/3_s.png)
+```python
+# Initialize the map centered on Texas
+m = folium.Map(location=[31.0, -100.0], zoom_start=6)
+
+# Query to get the longest river in Texas
+query_longest_river_in_texas = """
+SELECT r.name, SDO_GEOM.SDO_LENGTH(r.geom, 0.005, 'unit=KM') as length, SDO_UTIL.TO_WKTGEOMETRY(r.geom)
+FROM us_rivers r, us_states s
+WHERE s.state = 'Texas' AND SDO_ANYINTERACT(r.geom, s.geom) = 'TRUE'
+ORDER BY length DESC
+FETCH FIRST ROW ONLY
+"""
+
+# Execute the query and fetch the result
+result = cursor.execute(query_longest_river_in_texas).fetchone()
+
+# Extract river name, length, and geometry
+river_name = result[0]
+river_length = result[1]
+river_geom_wkt = result[2]
+
+# Convert WKT to GeoJSON geometry
+river_geom = wkt.loads(river_geom_wkt)
+river_geojson_geom = geojson.Feature(
+    geometry=shape(river_geom),
+    properties={"name": river_name, "length_km": river_length},
+)
+
+# Define style for the river
+style = {"fillColor": "blue", "color": "red"}
+
+# Create a GeoJSON FeatureCollection
+feature_collection = geojson.FeatureCollection([river_geojson_geom])
+
+# Add the GeoJSON data to the map with styling
+folium.GeoJson(feature_collection, style_function=lambda x: style).add_to(m)
+
+# Add a popup with the river name and length
+popup_content = f"<strong>{river_name}</strong><br>Length: {river_length} km"
+folium.Popup(popup_content).add_to(m)
+```
 
 **Wynik**
 
@@ -869,7 +974,58 @@ Python (folium, geojson)
 
 **Skrypt w Pythonie**
 
-![](img/ex8/4_s.png)
+```python
+# Query to get the nearest parks to Los Angeles
+query_nearest_parks_to_la = """
+SELECT p.name, SDO_GEOM.SDO_DISTANCE(p.geom, c.location, 0.005, 'unit=KM') as distance, SDO_UTIL.TO_WKTGEOMETRY(p.geom)
+FROM us_parks p, us_cities c
+WHERE c.city = 'Los Angeles'
+ORDER BY distance
+FETCH FIRST 5 ROWS ONLY
+"""
+
+# Execute the query and fetch the results
+results = cursor.execute(query_nearest_parks_to_la).fetchall()
+
+# Initialize the map centered on Los Angeles
+m = folium.Map(location=[34.0522, -118.2437], zoom_start=12)
+
+# Define style for the parks
+style = {"fillColor": "green", "color": "darkgreen"}
+
+# Initialize an empty list to store GeoJSON features
+features = []
+
+# Process the query results
+for row in results:
+    park_name = row[0]
+    park_distance = row[1]
+    park_geom_wkt = row[2]
+
+    # Convert WKT to Shapely geometry
+    park_geom = loads(park_geom_wkt)
+
+    # Create a GeoJSON feature with the park's geometry and properties
+    park_geojson_geom = geojson.Feature(
+        geometry=park_geom, properties={"name": park_name, "distance_km": park_distance}
+    )
+
+    # Add the feature to the list
+    features.append(park_geojson_geom)
+
+    # Add a marker to the map for each park with a popup showing its name and distance
+    folium.Marker(
+        location=[park_geom.centroid.y, park_geom.centroid.x],
+        popup=f"<strong>{park_name}</strong><br>Distance: {park_distance:.2f} km",
+        icon=folium.Icon(color="green"),
+    ).add_to(m)
+
+# Create a GeoJSON FeatureCollection
+feature_collection = geojson.FeatureCollection(features)
+
+# Add the GeoJSON data to the map with styling
+folium.GeoJson(feature_collection, style_function=lambda x: style).add_to(m)
+```
 
 **Wynik**
 
