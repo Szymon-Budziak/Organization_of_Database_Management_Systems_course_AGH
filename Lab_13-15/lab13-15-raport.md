@@ -1144,6 +1144,35 @@ ORDER BY area DESC
 ('Montana', 380815.66)
 ('New Mexico', 314906.25)
 
+
+e) Wykresy na mapie USA
+
+```sql
+ALTER SESSION SET CURRENT_SCHEMA = US_SPAT;
+
+select * from us_states
+where state_abrv != 'AK';
+
+SELECT sdo_geom.sdo_buffer(c.geom, 100000, 0.5) AS buffer_geom
+FROM us_states c
+WHERE c.state = 'Wyoming';
+
+SELECT sdo_geom.sdo_centroid(c.geom, 0.5) as centroid
+FROM us_states c 
+WHERE c.state = 'New York';
+
+SELECT sdo_geom.sdo_convexhull(c.geom) as hull
+FROM us_states c WHERE c.state = 'New York';
+
+SELECT sdo_util.simplify(c.geom, 100000) as simplify
+FROM us_states c WHERE c.state = 'Texas';
+
+SELECT sdo_geom.sdo_mbr(c.geom) as mbr
+FROM us_states c WHERE c.state = 'California';
+```
+
+![](img/ex7/sdo_funcs.png)
+
 # Zadanie 8
 
 Wykonaj kilka własnych przykładów/analiz
